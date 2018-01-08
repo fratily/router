@@ -20,6 +20,10 @@ use Psr\SimpleCache\CacheInterface;
  */
 class Dispatcher{
 
+    const FOUND                 = 0;
+    const NOT_FOUND             = 1;
+    const METHOD_NOT_ALLOWED    = 2;
+
     /**
      * 登録されたShortRegexのリスト
      *
@@ -141,6 +145,80 @@ class Dispatcher{
      *      $return[1]には受容されるHTTPメソッドのリストが格納される。
      */
     public function dispatch(string $method, string $url){
+        $method     = strtoupper($method);
+        $url        = substr($url, 0, 1) === "/" ? $url : "/{$url}";
+        $cacheKey   = $this->getCacheKey($method, $url);
+        $cache      = $this->getResultCache($cacheKey);
 
+        if($cache !== null){
+            return $cache;
+        }
+
+        $static = $this->collector->getStatic();
+
+        if(isset($static[$method][$url])){
+            $result = [
+                self::FOUND,
+                $static[$method][$url]
+            ];
+        }else{
+            //  do something
+
+            $result = [
+                self::NOT_FOUND
+            ];
+        }
+
+
+        $this->setResultCache($cacheKey, $result);
+
+        return $result;
+    }
+
+    /**
+     * キャッシュする場合のキー
+     *
+     * @param   string  $method
+     * @param   string  $url
+     *
+     * @return  string
+     */
+    private function getCacheKey(string $method, string $url){
+        return "fratily.router."
+            . hash("md5", $this->cachePrefix . $method . $url);
+    }
+
+    /**
+     * ルーティング結果をキャッシュから取得する
+     *
+     * @param   string  $key
+     *      キャッシュのキー
+     *
+     * @return  mixed[]|null
+     */
+    private function getResultCache(string $key){
+        if($this->cache !== null && $this->cache->has($key)){
+            $result = $this->cache->get($key);
+
+            if(is_array($result)){
+                return $result;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * ルーティング結果をキャッシュする
+     *
+     * @param   string  $key
+     *      キャッシュのキー
+     * @param   mixed[] $result
+     *      ルーティング結果
+     */
+    private function setResultCache(string $key, array $result){
+        if($this->cache !== null){
+            $this->cache->set($key, $result);
+        }
     }
 }
