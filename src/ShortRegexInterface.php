@@ -17,4 +17,23 @@ namespace Fratily\Router;
  *
  */
 interface ShortRegexInterface{
+
+    /**
+     * URLのセグメントに一致するか検証する
+     *
+     * @param   string  $segment
+     *      検証するセグメント
+     *
+     * @return  bool
+     */
+    public function match(string $segment): bool;
+
+    /**
+     * 一致したセグメントを任意の値に書き換える
+     *
+     * @param   string  $segment
+     *      書き換えるセグメント
+     * @return  mixed
+     */
+    public function convert(string $segment);
 }
