@@ -106,7 +106,7 @@ class Dispatcher{
     /**
      * Constructor
      *
-     * @param   RouteCollector  $routes
+     * @param   RouteCollector  $collector
      * @param   CacheInterface  $cache
      *      ルーティング結果をキャッシュする
      * @param   int $ttl
@@ -116,12 +116,15 @@ class Dispatcher{
      *      この値を変更すれば過去のキャッシュは使用されなくなる。
      */
     public function __construct(
-        RouteCollector $routes,
+        RouteCollector $collector,
         CacheInterface $cache = null,
         int $ttl = 600,
         string $prefix = ""
     ){
-
+        $this->collector    = $collector;
+        $this->cache        = $cache;
+        $this->cacheTTL     = $ttl;
+        $this->cachePrefix  = $prefix;
     }
 
     /**
