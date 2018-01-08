@@ -20,6 +20,8 @@ use Psr\SimpleCache\CacheInterface;
  */
 class Dispatcher{
 
+    private static $shortRegexes    = [];
+
     /**
      * ShortRegexを返す
      *
@@ -29,7 +31,11 @@ class Dispatcher{
      * @return  ShortRegexInterface
      */
     public static function getShortRegex(string $modifier){
+        if(!isset(self::$shortRegexes[$modifier])){
+            throw new \InvalidArgumentException();
+        }
 
+        return self::$shortRegexes[$modifier];
     }
 
     /**
@@ -41,7 +47,7 @@ class Dispatcher{
      * @return  bool
      */
     public static function hasShortRegex(string $modifier){
-
+        return isset(self::$shortRegexes[$modifier]);
     }
 
     /**
@@ -49,11 +55,11 @@ class Dispatcher{
      *
      * @param   string  $modifier
      *      ルーティングルール内でShortRegexを識別する修飾子
-     * @param   ShortRegexInterface $class
-     *      ShortRegexの実装クラス
+     * @param   ShortRegexInterface $instance
+     *      ShortRegexの実装クラスのインスタンス
      */
-    public static function addShortRegex(string $modifier, string $class){
-
+    public static function addShortRegex(string $modifier, ShortRegexInterface $instance){
+        self::$shortRegexes[$modifier]  = $instance;
     }
 
     /**
@@ -65,7 +71,11 @@ class Dispatcher{
      * @return  void
      */
     public static function removeShortRegex(string $modifier){
+        if(!isset(self::$shortRegexes[$modifier])){
+            throw new \InvalidArgumentException();
+        }
 
+        unset(self::$shortRegexes[$modifier]);
     }
 
     /**
