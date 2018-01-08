@@ -20,7 +20,32 @@ use Psr\SimpleCache\CacheInterface;
  */
 class Dispatcher{
 
+    /**
+     * 登録されたShortRegexのリスト
+     *
+     * @var ShortRegex[]
+     */
     private static $shortRegexes    = [];
+
+    /**
+     * @var RouteCollector
+     */
+    private $collector;
+
+    /**
+     * @var CacheInterface|null
+     */
+    private $cache;
+
+    /**
+     * @var int
+     */
+    private $cacheTTL;
+
+    /**
+     * @var string
+     */
+    private $cachePrefix;
 
     /**
      * ShortRegexを返す
