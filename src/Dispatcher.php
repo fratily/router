@@ -154,27 +154,148 @@ class Dispatcher{
             return $cache;
         }
 
-        $static = $this->collector->getStatic();
-
-        if(isset($static[$method][$url])){
+        $result = null;
+        
+        if(isset($this->collector->getStatic()[$method][$url])){
             $result = [
                 self::FOUND,
                 $static[$method][$url]
             ];
         }else{
-            //  do something
-
-            $result = [
-                self::NOT_FOUND
-            ];
+            $node   = $this->collector->getTree()[$method] ?? [];
+            $stack  = new \SplStack();
+            
+            foreach(array_reverse(Parser::split2segments($url)) as $segment){
+                $stack->push($segment);
+            }
+            
+            $stackOrigin    = clone $stack;
+            $result         = $this->searchNode($stack, $node);
+            
+            if(is_array($result)){
+                $result = [
+                    self::FOUND,
+                    $result
+                ];
+            }else{
+                $result = null;
+            }
         }
-
+        
+        if($result === null){
+            $allowed    = $this->allowedMethods($url, $stackOrigin, $method);
+            
+            if(0 < count($allowed)){
+                $result = [
+                    self::METHOD_NOT_ALLOWED,
+                    $allowed
+                ];
+            }else{
+                $result = [
+                    self::NOT_FOUND,
+                    []
+                ];
+            }
+        }
 
         $this->setResultCache($cacheKey, $result);
 
         return $result;
     }
+    
+    /**
+     * アクセスできるHTTPメソッドのリストを返す
+     * 
+     * @param   string  $url
+     *      リクエストURL
+     * @param   \SplStack   $segments
+     *      リクエストURLをセグメントごとに格納したstack
+     * @param   string  $masks
+     *      無視するHTTPメソッド
+     * 
+     * @return  string[]
+     */
+    private function allowedMethods(string $url, \SplStack $segments, string ...$masks){
+        $allowed    = [];
+        
+        foreach($this->collector->getStatic() as $method => $match){
+            if(!in_array($method, $masks)){
+                if($url === $match){
+                    $allowed[]  = $method;
+                }
+            }
+        }
+            
+        foreach($this->collector->getTree() as $method => $node){
+            if(!in_array($method, $allowed) && !in_array($method, $masks)){
+                if($this->searchNode(clone $segments, $node)){
+                    $allowed[]  = $method;
+                }
+            }
+        }
+        
+        return $allowed;
+    }
 
+    /**
+     * ルーティングツリーのノードを探索する
+     * 
+     * @param   \SplStack   $segments
+     *      セグメントごとに格納されたスタック
+     * @param   mixed[] $node
+     *      ノード
+     * 
+     * @return  mixed[]|bool
+     */
+    private function searchNode(\SplStack $segments, array $node){
+        $return     = false;
+        $segment    = $segments->pop();
+        
+        foreach($node as $rule => $data){
+            if(isset($data["type"])){
+                $match  = false;
+                
+                //  一致するか判定
+                switch($data["type"]){
+                    case RouteCollector::RAW:
+                        $match  = $segment === $rule;
+                        break;
+                    
+                    case RouteCollector::REGEX:
+                        $match  = (bool)preg_match("/\A{$rule}\z/", $segment);
+                        break;
+                    
+                    case RouteCollector::SREGEX:
+                        if(self::hasShortRegex($rule)){
+                            $match  = self::getShortRegex($rule)->match($segment);
+                        }
+                        break;
+                    default:
+                        continue 2;
+                }
+                
+                if($match && $segments->isEmpty()){ //  一致かつここで終了
+                    $return = $data["end"] ?? $return;
+                }else if($match){   //  一致かつ探索継続
+                    $return = $this->searchNode($segments, $data["children"] ?? []);
+                }
+                
+                if(is_array($return)){  //  探索結果が出た
+                    if(isset($data["name"])){   //  セグメントをパラメーターに追加
+                        $return[$data["name"]]  =
+                            $data["type"] === RouteCollector::SREGEX
+                                ? self::getShortRegex($rule)->convert($segment)
+                                : $segment;
+                    }
+                    
+                    break;
+                }
+            }
+        }
+        
+        return $return;
+    }
+    
     /**
      * キャッシュする場合のキー
      *
