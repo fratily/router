@@ -18,6 +18,10 @@ namespace Fratily\Router;
  */
 class RouteCollector{
 
+    const RAW       = 1;
+    const REGEX     = 2;
+    const SREGEX    = 3;
+    
     /**
      * ルート定義をグループ化する
      *
