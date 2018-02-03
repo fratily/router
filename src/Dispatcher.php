@@ -148,7 +148,7 @@ class Dispatcher{
         $method     = strtoupper($method);
         $url        = substr($url, 0, 1) === "/" ? $url : "/{$url}";
         $cacheKey   = $this->getCacheKey($method, $url);
-        $result     = [self::NOT_FOUND, []];
+        $result     = [self::NOT_FOUND, [], []];
         
         if(($cache = $this->getResultCache($cacheKey)) !== null){
             return $cache;
@@ -157,6 +157,7 @@ class Dispatcher{
         if(isset($this->collector->getStatic()[$method][$url])){
             $result = [
                 self::FOUND,
+                [],
                 $this->collector->getStatic()[$method][$url]
             ];
         }else{
@@ -166,7 +167,7 @@ class Dispatcher{
             );
             
             if($search !== false){
-                $result = [self::FOUND, $search];
+                $result = [self::FOUND, $search[0], $search[1]];
             }
         }
         
@@ -184,7 +185,7 @@ class Dispatcher{
             );
             
             if(0 < count($allowed)){
-                $result = [self::METHOD_NOT_ALLOWED, $allowed];
+                $result = [self::METHOD_NOT_ALLOWED, $allowed, []];
             }
         }
 
@@ -237,8 +238,8 @@ class Dispatcher{
      * 
      * @return  mixed[]|bool
      */
-    private function searchNode(array $segments, array $node){
-        $return     = false;
+    private function searchNode(array $segments, array $node, array $params = []){
+        $end        = null;
         $segment    = array_pop($segments);
         
         foreach($node as $data){
@@ -264,26 +265,32 @@ class Dispatcher{
                         continue 2;
                 }
                 
-                if($match && empty($segments)){ //  一致かつここで終了
-                    $return = $data["end"] ?? $return;
-                }else if($match){   //  一致かつ探索継続
-                    $return = $this->searchNode($segments, $data["children"] ?? []);
-                }
-                
-                if(is_array($return)){  //  探索結果が出た
+                if($match){
                     if(isset($data["name"])){   //  セグメントをパラメーターに追加
-                        $return[$data["name"]]  =
+                        $params[$data["name"]]  =
                             $data["type"] === RouteCollector::SREGEX
                                 ? self::getShortRegex($data["rule"])->convert($segment)
                                 : $segment;
                     }
                     
-                    break;
+                    if(empty($segments)){
+                        if(isset($data["end"])){
+                            return [$params, $end];
+                        }
+                        
+                        return false;
+                    }
+                    
+                    $return = $this->searchNode($segments, $data["children"], $params);
+                    
+                    if($return !== false){
+                        return $return;
+                    }
                 }
             }
         }
         
-        return $return;
+        return false;
     }
     
     /**

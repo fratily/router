@@ -130,14 +130,14 @@ class DispatcherTest extends \PHPUnit\Framework\TestCase{
     
     public function provideDispatchTestcase(){
         return [
-            ["GET", "/", [Dispatcher::FOUND,["name" => "root"]]],
-            ["HEAD", "/", [Dispatcher::FOUND, ["name" => "root"]]],
-            ["GET", "", [Dispatcher::FOUND, ["name" => "root"]]],
-            ["HEAD", "", [Dispatcher::FOUND, ["name" => "root"]]],
-            ["GET", "multi/method/", [Dispatcher::FOUND, []]],
-            ["POST", "multi/method/", [Dispatcher::FOUND, []]],
-            ["get", "users/my/", [Dispatcher::FOUND, ["name" => "mypage"]]],
-            ["get", "users/123/", [Dispatcher::FOUND, ["uid" => 123, "name" => "user"]]]
+            ["GET", "/", [Dispatcher::FOUND,[], ["name" => "root"]]],
+            ["HEAD", "/", [Dispatcher::FOUND, [], ["name" => "root"]]],
+            ["GET", "", [Dispatcher::FOUND, [], ["name" => "root"]]],
+            ["HEAD", "", [Dispatcher::FOUND, [], ["name" => "root"]]],
+            ["GET", "multi/method/", [Dispatcher::FOUND, [], []]],
+            ["POST", "multi/method/", [Dispatcher::FOUND, [], []]],
+            ["get", "users/my/", [Dispatcher::FOUND, [], ["name" => "mypage"]]],
+            ["get", "users/123/", [Dispatcher::FOUND, ["uid" => 123], ["name" => "user"]]]
         ];
     }
 }
