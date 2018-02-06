@@ -64,7 +64,8 @@ switch($result[0]){
         $allowedMethods = $result[1];
         break;
     case Fratily\Router\Dispatcher::FOUND:
-        $params = $resul[1];
+        $params = $result[1];   //  パラメータ
+        $data   = $result[2];   //  ルートデータ
         //  何らかの処理
         break;
 }
@@ -74,11 +75,15 @@ switch($result[0]){
 
 ルーティングルールは`RouteCollector::addRoute()`で定義します。
 
-第1引数は許可するHTTPメソッド。  
-第2引数はマッチするURIのルール。  
-そして第3引数には追加パラメーターを定義できます。
+第1引数には許可するHTTPメソッド。  
+第2引数にはマッチするURIのルール。  
+第3引数にはルートデータを定義します。
 
 第2引数の先頭のスラッシュは省略することができます。
+
+> *ルートデータとは*  
+> ルート定義者が自由に扱える配列です。  
+> MVCモデルにおけるコントローラー名や、ルート名等に使用できます。
 
 ```php
 $collector->addRoute("GET", "/", [
@@ -195,6 +200,19 @@ $collector->addGroup("/users", function($collector){
 
 ここで共通化されたパラメータは最も優先度が低く、
 ほかの定義に上書きされうることに注意してください。
+
+### 返り値
+
+`Dispatcher::dispatch()`は配列を返します。
+
+インデックス0はルーティング結果が格納されており、`Dispatcher::NOT_FOUND`,
+`Dispatcher::METHOD_NOT_ALLOWED`もしくは`Dispatcher::FOUND`の値をとります。
+
+インデックス1はパラメータリストが格納されており、正規表現などでルート内に
+埋め込んだパラメータ名をキーとする連想配列をとります。
+
+インデックス2はルートデータが格納されており、ルート定義時に第3引数で指定した値と
+グループ化で定義したデータのマージした結果をとります。
 
 ## Note
 
