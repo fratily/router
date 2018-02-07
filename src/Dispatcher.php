@@ -211,8 +211,11 @@ class Dispatcher{
         
         foreach($this->collector->getStatic() as $method => $match){
             if(!in_array($method, $masks)){
-                if($url === $match){
-                    $allowed[]  = $method;
+                foreach(array_keys($match) as $match){
+                    if($url === $match){
+                        $allowed[]  = $method;
+                        break;
+                    }
                 }
             }
         }
