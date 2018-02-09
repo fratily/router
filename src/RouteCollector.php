@@ -22,7 +22,7 @@ class RouteCollector{
     const REG   = 2;
     const SREG  = 3;
     
-    const REG_SEG   = "/\A([A-Z_][0-9A-Z_]*)(:|\|)(.+?)\z/i";
+    const REG_SEG   = "/\A\{([A-Z_][0-9A-Z_]*)(:|\|)(.+?)\}\z/i";
     
     /**
      * @var mixed[][]
@@ -33,6 +33,47 @@ class RouteCollector{
      * @var mixed[][]
      */
     private $node   = [];
+    
+    
+    public function addRoute(string $method, string $path, array $data = []){
+        $segments   = Parser::split2segments(explode("?", $path, 2)[0]);
+        $i          = 1;
+        $parent     = "root";
+        $static     = true;
+        
+        foreach($segments as $segment){
+            $name   = null;
+            
+            if((bool)preg_match(self::REG_SEG, $segment, $m)){
+                $static = false;
+                
+                if($m[2] === ":"){
+                    $ruleId = $this->addRule(self::REG, $m[3]);
+                    $name   = $m[1];
+                }else{
+                    $ruleId = $this->addRule(self::SREG, $m[3]);
+                    $name   = $m[1];
+                }
+            }else{
+                $ruleId = $this->addRule(self::RAW, $segment);
+            }
+            
+            $parent = $this->addNode($i++, $ruleId, $parent, $method, $name);
+        }
+        
+        if($static){
+            $this->static[$method]      = $this->static[$method] ?? [];
+            $this->static[$method]["/".implode("/", $segments)] = $data;
+        }
+        
+        if($this->node[$parent]["data"] !== null){
+            $this->node[$parent]["data"]    = array_merge(
+                $this->node[$parent]["data"], $data
+            );
+        }else{
+            $this->node[$parent]["data"]    = $data;
+        }
+    }
     
     /**
      * ルールを取得する
