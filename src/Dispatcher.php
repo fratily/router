@@ -1,4 +1,4 @@
-<?php
+ｃ<?php
 /**
  * FratilyPHP Router
  *
@@ -255,11 +255,11 @@ class Dispatcher{
                         $match  = $segment === $data["rule"];
                         break;
                     
-                    case RouteCollector::REGEX:
+                    case RouteCollector::REG:
                         $match  = (bool)preg_match("/\A{$data["rule"]}\z/", $segment);
                         break;
                     
-                    case RouteCollector::SREGEX:
+                    case RouteCollector::SREG:
                         if(self::hasShortRegex($data["rule"])){
                             $match  = self::getShortRegex($data["rule"])->match($segment);
                         }
@@ -271,7 +271,7 @@ class Dispatcher{
                 if($match){
                     if(isset($data["name"])){   //  セグメントをパラメーターに追加
                         $params[$data["name"]]  =
-                            $data["type"] === RouteCollector::SREGEX
+                            $data["type"] === RouteCollector::SREG
                                 ? self::getShortRegex($data["rule"])->convert($segment)
                                 : $segment;
                     }
