@@ -23,4 +23,57 @@ class RouteCollector{
     const SREG  = 3;
     
     const REG_SEG   = "/\A([A-Z_][0-9A-Z_]*)(:|\|)(.+?)\z/i";
+    
+    /**
+     * @var mixed[][]
+     */
+    private $rule   = [];
+    
+    /**
+     * ルールを取得する
+     * 
+     * @param   string  $id
+     * 
+     * @return  mixed[]|null
+     */
+    public function getRule(string $id){
+        return $this->rule[$id] ?? null;
+    }
+    
+    /**
+     * ルールの存在を確認する
+     * 
+     * @param   string  $id
+     */
+    public function hasRule(string $id){
+        return isset($this->rule[$id]);
+    }
+    
+    /**
+     * ルールを追加する
+     * 
+     * @param   int $type
+     * @param   string  $match
+     * 
+     * @return  string
+     *      ルールIDが返される。
+     * 
+     * @throws  \InvalidArgumentException
+     */
+    protected function addRule(int $type, string $match){
+        if($type !== self::RAW && $type !== self::REG && $type !== self::SREG){
+            throw new \InvalidArgumentException();
+        }
+        
+        $id = $type . $match;
+        
+        if(!isset($this->rule[$id])){
+            $this->rule[$id]    = [
+                "type"  => $type,
+                "match" => $match
+            ];
+        }
+        
+        return $this->rule[$id];
+    }
 }
