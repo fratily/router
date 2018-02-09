@@ -65,6 +65,10 @@ class RouteCollector{
             throw new \InvalidArgumentException();
         }
         
+        if($type === self::REG && (bool)preg_match("/\A[0-9A-Z-_]\z/i", $match)){
+            $type   = self::RAW;
+        }
+        
         $id = hash("md5", $type . $match);
         
         if(!isset($this->rule[$id])){
