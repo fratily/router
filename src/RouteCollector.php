@@ -35,14 +35,61 @@ class RouteCollector{
     private $groupData      = [];
     
     /**
-     * 文字列一致だけで一致確認ができるルートリスト
+     * 静的ルート定義に対するデータリスト
      * 
-     * @var mixed[][]
+     * [
+     *      GET     => [
+     *          "/foo/bar/baz"  => [data],
+     *          ...
+     *      ],
+     *      POST    => [
+     *          ...
+     *      ],
+     *      ...
+     * ]
+     * 
+     * @var mixed[][][]
      */
-    private $static = [];
+    private $static     = [];
     
     /**
-     * セグメントごとの一致確認用のデータリスト
+     * 動的ルート定義に対するデータリスト
+     * 
+     * [
+     *      GET     => [
+     *          "ac14f,c61ea"   => [data],
+     *          ...
+     *      ],
+     *      POST    => [
+     *          ...
+     *      ],
+     *      ...
+     * ]
+     * 
+     * @var mixed[][][]
+     */
+    private $dynamic    = [];
+    
+    /**
+     * セグメントごとのデータ
+     * 
+     * [
+     *      nodeID   => [
+     *          rule    => ruleID,
+     *          name    => parameterName,
+     *          child   => [
+     *              parentNodeId    => [
+     *                  childNodeId,
+     *                  ...
+     *              ],
+     *              parentNodeId    => [
+     *                  ...
+     *              ],
+     *              ...
+     *          ]
+     *      ],
+     *      ...
+     * ]
      * 
      * @var mixed[][]
      */
@@ -51,12 +98,26 @@ class RouteCollector{
     /**
      * 一致確認用ルールリスト
      * 
-     * @var mixed[][]
+     * [
+     *      ruleID   => [
+     *          type    => self::RAW || self:REG || self::SREG,
+     *          match   => 一致確認用の文字列(正規表現やSREGネーム等)
+     *      ],
+     *      ...
+     * ]
+     * 
+     * @var mixed[]
      */
     private $rule   = [];
     
     /**
      * ルート定義に対するルート名の対応リスト
+     * 
+     * [
+     *      static  => [
+     *          
+     *      ]
+     * ]
      * 
      * @var string[]
      */
@@ -68,4 +129,29 @@ class RouteCollector{
      * @var string[]
      */
     private $route  = [];
+    
+    /**
+     * 新しいノードを追加する
+     * 
+     * @param   int $ruleId
+     *      ルールのID
+     * @param   string  $name
+     *      このセグメントのパラメータ名
+     * @param   string  $methods
+     *      このノードで受容するHTTPメソッドリスト
+     * @param   string  $parent
+     *      親ノードID
+     * @param    $data
+     *      このノードで終了する場合のルートデータ
+     */
+    protected function addNode(
+        int $ruleId,
+        string $name,
+        array $methods,
+        string $parent = null,
+        array $data = null
+    ){
+    }
+    
+    protected function addRule(){}
 }
