@@ -18,9 +18,9 @@ namespace Fratily\Router;
  */
 class RouteCollector{
 
-    const RAW       = 1;
-    const REGEX     = 2;
-    const SREGEX    = 3;
+    const RAW   = 1;
+    const REG   = 2;
+    const SREG  = 3;
     
     const REGEX_SEG = "/\A((?<name>[A-Za-z_][0-9A-Za-z_]*)?(?<type>:|\|))?(?<regex>.+?)\z/x";
     
@@ -271,7 +271,7 @@ class RouteCollector{
                 }
                 
                 $name   = ($m["name"] ?? "") === "" ? null : $m["name"];
-                $type   = ($m["type"] ?? ":") === ":" ? self::REGEX : self::SREGEX;
+                $type   = ($m["type"] ?? ":") === ":" ? self::REG : self::SREG;
                 $rule   = $m["regex"];
             }else{
                 $name   = null;
@@ -279,7 +279,7 @@ class RouteCollector{
                 $rule   = $segment;
             }
             
-            if($type === self::SREGEX
+            if($type === self::SREG
                 && !(bool)preg_match("/\A[A-Za-z_][0-9A-Za-z_]*\z/", $rule)
             ){
                 return false;
