@@ -32,7 +32,7 @@ class RouteCollector{
     /**
      * @var mixed[]
      */
-    private $groupParams    = [];
+    private $groupData      = [];
     
     /**
      */
@@ -46,9 +46,9 @@ class RouteCollector{
      * ルート定義をグループ化する
      *
      * @param   string|mixed[]  $common
-     *      stringならばurlの先頭に指定文字列を追加し、arrayならパラメーターの
-     *      共通値を設定する。arrayの場合の共通パラメーターは最も優先度が低く、
-     *      addRoute()で定義されるパラメーターに上書きされる可能性がある。
+     *      stringならばurlの先頭に指定文字列を追加し、arrayならルートデータの
+     *      共通値を設定する。arrayの場合の共通ルートデータは最も優先度が低く、
+     *      addRoute()で定義されるルートデータに上書きされる可能性がある。
      * @param   callable    $callback
      *      このコールバック関数が実行される間だけグループ化が有効となる。
      *      コールバックは第一引数にこのオブジェクトが渡される。
@@ -58,8 +58,8 @@ class RouteCollector{
             $prev   = $this->groupPrefix;
             $this->groupPrefix  = $prev . $common;
         }else if(is_array($common)){
-            $prev   = $this->groupParams;
-            $this->groupParams  = $common + $prev;
+            $prev   = $this->groupData;
+            $this->groupData    = $common + $prev;
         }else{
             throw new \InvalidArgumentException;
         }
@@ -69,7 +69,7 @@ class RouteCollector{
         if(is_string($common)){
             $this->groupPrefix  = $prev;
         }else{
-            $this->groupParams  = $prev;
+            $this->groupData    = $prev;
         }
     }
 
@@ -80,12 +80,10 @@ class RouteCollector{
      *      一致するメソッド、もしくはそのリスト。
      * @param   string  $url
      *      一致するURLのルール。
-     * @param   mixed[] $params
-     *      ルールーに一致した場合に返されるパラメーターリスト。
-     *      グループパラメーターより優先され、URLルールで定義されたパラメーター
-     *      に上書きされうる。
+     * @param   mixed[] $data
+     *      ルールーに一致した場合に返されるルートデータ。
      */
-    public function addRoute($methods, string $url, array $params = []){
+    public function addRoute($methods, string $url, array $data = []){
         $methods    = array_unique(
             array_map(
                 "strtoupper",
@@ -97,12 +95,12 @@ class RouteCollector{
         );
         $url    = $this->groupPrefix . $url;
         $url    = substr($url, 0, 1) === "/" ? $url : "/{$url}";
-        $params = $params + $this->groupParams;
+        $data   = $data + $this->groupData;
         $nodes  = $this->createNodes(Parser::split2segments($url));
         
         if(is_string($nodes)){
             foreach($methods as $method){
-                $this->static[$method][$url]    = $params;
+                $this->static[$method][$url]    = $data;
             }
         }else if(is_array($nodes)){
             $parents    = [];
@@ -139,7 +137,7 @@ class RouteCollector{
             }
             
             foreach($parents as &$parent){
-                $parent["end"]  = array_merge($parent["end"] ?? [], $params);
+                $parent["end"]  = array_merge($parent["end"] ?? [], $data);
             }
         }
     }
@@ -149,13 +147,11 @@ class RouteCollector{
      *
      * @param   string  $url
      *      一致するURLのルール。
-     * @param   mixed[] $params
-     *      ルールーに一致した場合に返されるパラメーターリスト。
-     *      グループパラメーターより優先され、URLルールで定義されたパラメーター
-     *      に上書きされうる。
+     * @param   mixed[] $data
+     *      ルールーに一致した場合に返されるルートデータ。
      */
-    public function get(string $url, array $params = []){
-        $this->addRoute("GET", $url, $params);
+    public function get(string $url, array $data = []){
+        $this->addRoute("GET", $url, $data);
     }
 
     /**
@@ -163,13 +159,11 @@ class RouteCollector{
      *
      * @param   string  $url
      *      一致するURLのルール。
-     * @param   mixed[] $params
-     *      ルールーに一致した場合に返されるパラメーターリスト。
-     *      グループパラメーターより優先され、URLルールで定義されたパラメーター
-     *      に上書きされうる。
+     * @param   mixed[] $data
+     *      ルールーに一致した場合に返されるルートデータ。
      */
-    public function post(string $url, array $params = []){
-        $this->addRoute("POST", $url, $params);
+    public function post(string $url, array $data = []){
+        $this->addRoute("POST", $url, $data);
     }
 
     /**
@@ -177,13 +171,11 @@ class RouteCollector{
      *
      * @param   string  $url
      *      一致するURLのルール。
-     * @param   mixed[] $params
-     *      ルールーに一致した場合に返されるパラメーターリスト。
-     *      グループパラメーターより優先され、URLルールで定義されたパラメーター
-     *      に上書きされうる。
+     * @param   mixed[] $data
+     *      ルールーに一致した場合に返されるルートデータ。
      */
-    public function put(string $url, array $params = []){
-        $this->addRoute("PUT", $url, $params);
+    public function put(string $url, array $data = []){
+        $this->addRoute("PUT", $url, $data);
     }
 
     /**
@@ -191,13 +183,11 @@ class RouteCollector{
      *
      * @param   string  $url
      *      一致するURLのルール。
-     * @param   mixed[] $params
-     *      ルールーに一致した場合に返されるパラメーターリスト。
-     *      グループパラメーターより優先され、URLルールで定義されたパラメーター
-     *      に上書きされうる。
+     * @param   mixed[] $data
+     *      ルールーに一致した場合に返されるルートデータ。
      */
-    public function patch(string $url, array $params = []){
-        $this->addRoute("PATCH", $url, $params);
+    public function patch(string $url, array $data = []){
+        $this->addRoute("PATCH", $url, $data);
     }
 
     /**
@@ -205,13 +195,11 @@ class RouteCollector{
      *
      * @param   string  $url
      *      一致するURLのルール。
-     * @param   mixed[] $params
-     *      ルールーに一致した場合に返されるパラメーターリスト。
-     *      グループパラメーターより優先され、URLルールで定義されたパラメーター
-     *      に上書きされうる。
+     * @param   mixed[] $data
+     *      ルールーに一致した場合に返されるルートデータ。
      */
-    public function delete(string $url, array $params = []){
-        $this->addRoute("DELETE", $url, $params);
+    public function delete(string $url, array $data = []){
+        $this->addRoute("DELETE", $url, $data);
     }
 
     /**
@@ -219,13 +207,11 @@ class RouteCollector{
      *
      * @param   string  $url
      *      一致するURLのルール。
-     * @param   mixed[] $params
-     *      ルールーに一致した場合に返されるパラメーターリスト。
-     *      グループパラメーターより優先され、URLルールで定義されたパラメーター
-     *      に上書きされうる。
+     * @param   mixed[] $data
+     *      ルールーに一致した場合に返されるルートデータ。
      */
-    public function head(string $url, array $params = []){
-        $this->addRoute("HAED", $url, $params);
+    public function head(string $url, array $data = []){
+        $this->addRoute("HAED", $url, $data);
     }
 
     /**
