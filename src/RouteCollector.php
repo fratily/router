@@ -65,6 +65,7 @@ class RouteCollector{
             throw new \InvalidArgumentException();
         }
         
+        //  ここの正規表現はパフォーマンスやその他もろもろとの兼ね合いで調整
         if($type === self::REG && (bool)preg_match("/\A[0-9A-Z-_]\z/i", $match)){
             $type   = self::RAW;
         }
