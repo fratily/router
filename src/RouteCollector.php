@@ -65,7 +65,7 @@ class RouteCollector{
             throw new \InvalidArgumentException();
         }
         
-        $id = $type . $match;
+        $id = hash("md5", $type . $match);
         
         if(!isset($this->rule[$id])){
             $this->rule[$id]    = [
