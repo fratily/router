@@ -33,24 +33,22 @@ class Dispatcher{
     private $collector;
     
     /**
+     * @var bool[]
+     */
+    private $ruleCache  = [];
+    
+    /**
      * ShortRegexを追加する
      * 
      * @param   string  $modifier
      * @param   ShortRegexInterface $sregex
      */
     public function addShortRegex(string $modifier, ShortRegexInterface $sregex){
-        $this->sregex[$modifier]    = $sregex;
-    }
-    
-    /**
-     * ShortRegexを削除する
-     * 
-     * @param   string  $modifier
-     */
-    public function removeShortRegex(string $modifier){
         if(isset($this->sregex[$modifier])){
-            unset($this->sregex[$modifier]);
+            throw new \InvalidArgumentException();
         }
+        
+        $this->sregex[$modifier]    = $sregex;
     }
 
     /**
@@ -88,5 +86,37 @@ class Dispatcher{
      */
     public function reverseRoute(string $name, array $params, bool $addQuery = true){
         
+    }
+    
+    /**
+     * 文字列がルールに一致するか確認する
+     * 
+     * @param   string  $id
+     * @param   string  $target
+     * 
+     * @return  bool
+     */
+    protected function matchedRule(string $id, string $target){
+        $cacheKey   = "{$id}:{$target}";
+        
+        if(!isset($this->ruleCache[$cacheKey])){
+            $result = false;
+            
+            if(($rule = $this->collector->getRule($id)) !== null){
+                if($rule["type"] === RouteCollector::RAW){
+                    $result = $target === $rule["match"];
+                }else if($rule["type"] === RouteCollector::REG){
+                    $result = (bool)preg_match("/\A{$rule["match"]}\z/", $target);
+                }else if($rule["type"] === RouteCollector::SREG){
+                    if(isset($this->sregex[$rule["match"]])){
+                        $result = $this->sregex[$rule["match"]]->match($target);
+                    }
+                }
+            }
+            
+            $this->ruleCache[$cacheKey] = $result;
+        }
+        
+        return $this->ruleCache[$cacheKey];
     }
 }
