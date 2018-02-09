@@ -30,6 +30,11 @@ class RouteCollector{
     private $rule   = [];
     
     /**
+     * @var mixed[][]
+     */
+    private $node   = [];
+    
+    /**
      * ルールを取得する
      * 
      * @param   string  $id
@@ -80,5 +85,72 @@ class RouteCollector{
         }
         
         return $this->rule[$id];
+    }
+    
+    /**
+     * ノードを取得する
+     * 
+     * @param   string  $id
+     * 
+     * @return  mixed[]
+     */
+    public function getNode(string $id){
+        return $this->node[$id] ?? null;
+    }
+    
+    /**
+     * ノードの存在を確認する
+     * 
+     * @param   string  $id
+     * 
+     * @return  bool
+     */
+    public function hasNode(string $id){
+        return isset($this->node);
+    }
+    
+    /**
+     * ノードを追加する
+     * 
+     * @param   int $row
+     *      木構造での階層
+     * @param   string  $ruleId
+     * @param   string  $parentId
+     * @param   string  $method
+     * @param   string  $name
+     * 
+     * @return  string
+     * 
+     * @throws  \InvalidArgumentException
+     */
+    protected function addNode(
+        int $row,
+        string $ruleId,
+        string $parentId,
+        string $method,
+        string $name = null
+    ){
+        if(!$this->hasRule($ruleId)){
+            throw new \InvalidArgumentException();
+        }else if(!isset($this->node[$parentId])){
+            throw new \InvalidArgumentException();
+        }
+        
+        $nodeId = hash("md5", $parentId . $row . $ruleId . $method . ($name ?? ""));
+        
+        if(!isset($this->node[$nodeId])){
+            $this->node[$nodeId]    = [
+                "rule"  => $ruleId,
+                "name"  => $name,
+                "data"  => null,
+                "child" => []
+            ];
+            
+            if(!in_array($nodeId, $this->node[$parentId]["child"])){
+                $this->node[$parentId]["child"][]   = $nodeId;
+            }
+        }
+        
+        return $nodeId;
     }
 }
