@@ -34,8 +34,8 @@ class RouteCollector{
      * 同じパスを使用するルートが定義された場合、
      * 前に定義されたルートは上書きされる。
      *
-     * @param   string      $name
-     * @param   string      $path
+     * @param   string  $name
+     * @param   string  $path
      * @param   string[]    $methods    [optional]
      *      許容するHTTPメソッドを持つ配列。
      *      nullを指定した場合はすべてのメソッドを許容する。
@@ -80,22 +80,72 @@ class RouteCollector{
         ];
     }
 
+    /**
+     * GETメソッドを許容するルートを追加する
+     *
+     * @param   string  $name
+     * @param   string  $path
+     * @param   mixed[] $data   [optional]
+     *      ルートに一致した場合に返される値。
+     *
+     * @return  void
+     */
     public function get(string $name, string $path, array $data = []){
         $this->addRoute($name, $path, ["GET"], $data);
     }
 
+    /**
+     * POSTメソッドを許容するルートを追加する
+     *
+     * @param   string  $name
+     * @param   string  $path
+     * @param   mixed[] $data   [optional]
+     *      ルートに一致した場合に返される値。
+     *
+     * @return  void
+     */
     public function post(string $name, string $path, array $data = []){
         $this->addRoute($name, $path, ["POST"], $data);
     }
 
+    /**
+     * PUTメソッドを許容するルートを追加する
+     *
+     * @param   string  $name
+     * @param   string  $path
+     * @param   mixed[] $data   [optional]
+     *      ルートに一致した場合に返される値。
+     *
+     * @return  void
+     */
     public function put(string $name, string $path, array $data = []){
         $this->addRoute($name, $path, ["PUT"], $data);
     }
 
+    /**
+     * PATCHメソッドを許容するルートを追加する
+     *
+     * @param   string  $name
+     * @param   string  $path
+     * @param   mixed[] $data   [optional]
+     *      ルートに一致した場合に返される値。
+     *
+     * @return  void
+     */
     public function patch(string $name, string $path, array $data = []){
         $this->addRoute($name, $path, ["PATCH"], $data);
     }
 
+    /**
+     * DELETEメソッドを許容するルートを追加する
+     *
+     * @param   string  $name
+     * @param   string  $path
+     * @param   mixed[] $data   [optional]
+     *      ルートに一致した場合に返される値。
+     *
+     * @return  void
+     */
     public function delete(string $name, string $path, array $data = []){
         $this->addRoute($name, $path, ["DELETE"], $data);
     }
