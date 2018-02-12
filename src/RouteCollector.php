@@ -149,4 +149,20 @@ class RouteCollector{
     public function delete(string $name, string $path, array $data = []){
         $this->addRoute($name, $path, ["DELETE"], $data);
     }
+
+    /**
+     * ルーターを返す
+     *
+     * @param string $method
+     */
+    public function createRouter(string $method){
+
+    }
+
+    /**
+     * リバースルーターを返す
+     */
+    public function createReverseRouter(){
+
+    }
 }
