@@ -19,7 +19,7 @@ namespace Fratily\Router;
 class RouteCollector{
 
     /**
-     * @var mixed[]
+     * @var mixed[][]
      */
     private $routes = [];
 
@@ -27,7 +27,48 @@ class RouteCollector{
      * @var string[]
      */
     private $paths  = [];
+    
+    /**
+     * @var mixed[]
+     */
+    private $groupData      = [];
+    
+    /**
+     * @var string
+     */
+    private $groupPrefix    = "";
 
+    /**
+     * ルートリストを返す
+     * 
+     * @return  mixed[][]
+     */
+    public function getRoutes(){
+        return $this->routes;
+    }
+    
+    /**
+     * ルートを返す
+     * 
+     * @param   string  $name
+     * 
+     * @return  mixed[]
+     */
+    public function getRoute(string $name){
+        return $this->routes[$name] ?? null;
+    }
+    
+    /**
+     * ルートが既に定義されているか確認する
+     * 
+     * @param   string  $name
+     * 
+     * @return  bool
+     */
+    public function hasRoute(string $name){
+        return isset($this->routes[$name]);
+    }
+    
     /**
      * ルートを追加する
      *
@@ -56,6 +97,7 @@ class RouteCollector{
             throw new \LogicException;
         }
 
+        $path       = $this->groupPrefix . $path;
         $path       = substr($path, 0, 1) !== "/" ? "/{$path}" : $path;
         $methods    = $methods === null ? null : array_unique(
             array_map("strtoupper",
@@ -76,7 +118,7 @@ class RouteCollector{
         $this->routes[$name]    = [
             "path"  => $path,
             "allow" => ($methods === null || empty($methods)) ? null : $methods,
-            "data"  => $data
+            "data"  => array_merge($this->groupData, $data)
         ];
     }
 
@@ -149,7 +191,35 @@ class RouteCollector{
     public function delete(string $name, string $path, array $data = []){
         $this->addRoute($name, $path, ["DELETE"], $data);
     }
-
+    
+    /**
+     * グループ化
+     * 
+     * @param   string|mixed[]  $common
+     * @param   callable    $callback
+     * 
+     * @return  void
+     */
+    public function group($common, callable $callback){
+        if(is_array($common)){
+            $prev               = $this->groupData;
+            $this->groupData    = array_merge($prev, $common);
+        }else if(is_string($common)){
+            $prev               = $this->groupPrefix;
+            $this->groupPrefix  = $prev . $common;
+        }else{
+            throw new \InvalidArgumentException();
+        }
+        
+        $callback($this);
+        
+        if(is_array($callback)){
+            $this->groupData    = $prev;
+        }else{
+            $this->groupPrefix  = $prev;
+        }
+    }
+    
     /**
      * ルーターを返す
      *
