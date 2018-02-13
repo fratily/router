@@ -255,15 +255,27 @@ class RouteCollector{
      * ルーターを返す
      *
      * @param string $method
+     * 
+     * @return  Router
      */
     public function createRouter(string $method){
-
+        $routes  = [];
+        
+        foreach($this->routes as $name => $route){
+            if($route["allow"] === null || isset($route["allow"][$method])){
+                $routes[$name]  = $route;
+            }
+        }
+        
+        
     }
 
     /**
      * リバースルーターを返す
+     * 
+     * @return  ReverseRouter
      */
     public function createReverseRouter(){
-
+        
     }
 }
