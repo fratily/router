@@ -19,6 +19,8 @@ namespace Fratily\Router;
 class RouteCollector{
 
     /**
+     * 許容メソッドがnullならANY、空配列なら一致なし
+     * 
      * @var mixed[][]
      */
     private $routes = [];
@@ -38,6 +40,46 @@ class RouteCollector{
      */
     private $groupPrefix    = "";
 
+    /**
+     * パスを統一された形式に変換する
+     * 
+     * スラッシュで始まるパス文字列。
+     * 
+     * @param   string  $path
+     * 
+     * @return  string
+     * 
+     * @todo    マルチバイト文字などパーセントエンコーディングの扱い
+     */
+    protected static function normalizePath(string $path){
+        return substr($path, 0, 1) !== "/" ? "/{$path}" : $path;
+    }
+    
+    /**
+     * HTTPメソッドリストを統一された形式に変換する
+     * 
+     * HTTPメソッド名をキーにした配列。
+     * 
+     * @param   string[]    $methods
+     * 
+     * @return  bool[]|null
+     */
+    protected static function normalizeMethods(array $methods = null){
+        $return = null;
+        
+        if($methods !== null){
+            $return = [];
+            
+            foreach($methods as $method){
+                if(is_string($method) && $method !== ""){
+                    $return[strtoupper($method)]    = true;
+                }
+            }
+        }
+        
+        return $return;
+    }
+    
     /**
      * ルートリストを返す
      * 
@@ -77,7 +119,7 @@ class RouteCollector{
      *
      * @param   string  $name
      * @param   string  $path
-     * @param   string[]    $methods    [optional]
+     * @param   string[]    $allow    [optional]
      *      許容するHTTPメソッドを持つ配列。
      *      nullを指定した場合はすべてのメソッドを許容する。
      * @param   mixed[] $data   [optional]
@@ -90,25 +132,14 @@ class RouteCollector{
     public function addRoute(
         string $name,
         string $path,
-        array $methods = null,
+        array $allow = null,
         array $data = []
     ){
         if(isset($this->routes[$name])){
             throw new \LogicException;
         }
 
-        $path       = $this->groupPrefix . $path;
-        $path       = substr($path, 0, 1) !== "/" ? "/{$path}" : $path;
-        $methods    = $methods === null ? null : array_unique(
-            array_map("strtoupper",
-                array_filter(
-                    $methods,
-                    function($v){
-                        return is_string($v) && $v !== "";
-                    }
-                )
-            )
-        );
+        $path   = self::normalizePath($this->groupPrefix . $path);
 
         if(isset($this->paths[$path])){
             unset($this->routes[$this->paths[$path]]);
@@ -117,7 +148,7 @@ class RouteCollector{
         $this->paths[$path]     = $name;
         $this->routes[$name]    = [
             "path"  => $path,
-            "allow" => ($methods === null || empty($methods)) ? null : $methods,
+            "allow" => self::normalizeMethods($allow),
             "data"  => array_merge($this->groupData, $data)
         ];
     }
