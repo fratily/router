@@ -19,8 +19,13 @@ namespace Fratily\Router;
 class RouteCollector{
 
     /**
+     * @var Router[]
+     */
+    private $router = [];
+
+    /**
      * 許容メソッドがnullならANY、空配列なら一致なし
-     * 
+     *
      * @var mixed[][]
      */
     private $routes = [];
@@ -29,12 +34,12 @@ class RouteCollector{
      * @var string[]
      */
     private $paths  = [];
-    
+
     /**
      * @var mixed[]
      */
     private $groupData      = [];
-    
+
     /**
      * @var string
      */
@@ -42,75 +47,75 @@ class RouteCollector{
 
     /**
      * パスを統一された形式に変換する
-     * 
+     *
      * スラッシュで始まるパス文字列。
-     * 
+     *
      * @param   string  $path
-     * 
+     *
      * @return  string
-     * 
+     *
      * @todo    マルチバイト文字などパーセントエンコーディングの扱い
      */
     protected static function normalizePath(string $path){
         return substr($path, 0, 1) !== "/" ? "/{$path}" : $path;
     }
-    
+
     /**
      * HTTPメソッドリストを統一された形式に変換する
-     * 
+     *
      * HTTPメソッド名をキーにした配列。
-     * 
+     *
      * @param   string[]    $methods
-     * 
+     *
      * @return  bool[]|null
      */
     protected static function normalizeMethods(array $methods = null){
         $return = null;
-        
+
         if($methods !== null){
             $return = [];
-            
+
             foreach($methods as $method){
                 if(is_string($method) && $method !== ""){
                     $return[strtoupper($method)]    = true;
                 }
             }
         }
-        
+
         return $return;
     }
-    
+
     /**
      * ルートリストを返す
-     * 
+     *
      * @return  mixed[][]
      */
     public function getRoutes(){
         return $this->routes;
     }
-    
+
     /**
      * ルートを返す
-     * 
+     *
      * @param   string  $name
-     * 
+     *
      * @return  mixed[]
      */
     public function getRoute(string $name){
         return $this->routes[$name] ?? null;
     }
-    
+
     /**
      * ルートが既に定義されているか確認する
-     * 
+     *
      * @param   string  $name
-     * 
+     *
      * @return  bool
      */
     public function hasRoute(string $name){
         return isset($this->routes[$name]);
     }
-    
+
     /**
      * ルートを追加する
      *
@@ -222,13 +227,13 @@ class RouteCollector{
     public function delete(string $name, string $path, array $data = []){
         $this->addRoute($name, $path, ["DELETE"], $data);
     }
-    
+
     /**
      * グループ化
-     * 
+     *
      * @param   string|mixed[]  $common
      * @param   callable    $callback
-     * 
+     *
      * @return  void
      */
     public function group($common, callable $callback){
@@ -241,41 +246,48 @@ class RouteCollector{
         }else{
             throw new \InvalidArgumentException();
         }
-        
+
         $callback($this);
-        
+
         if(is_array($callback)){
             $this->groupData    = $prev;
         }else{
             $this->groupPrefix  = $prev;
         }
     }
-    
+
     /**
      * ルーターを返す
      *
      * @param string $method
-     * 
+     *
      * @return  Router
      */
-    public function createRouter(string $method){
-        $routes  = [];
-        
-        foreach($this->routes as $name => $route){
-            if($route["allow"] === null || isset($route["allow"][$method])){
-                $routes[$name]  = $route;
+    public function createRouter(string $method, array $option = []){
+        $method = strtoupper($method);
+        $option = $option + [
+            "allow_head"    => true
+        ];
+
+        if(!isset($this->router[$method])){
+            $this->router[$method]  = new Router();
+
+            foreach($this->routes as $name => $route){
+                if($route["allow"] === null || isset($route["allow"][$method])){
+                    $router->addRoute($name, $route["path"], $route["data"]);
+                }
             }
         }
-        
-        
+
+        return $this->router[$method];
     }
 
     /**
      * リバースルーターを返す
-     * 
+     *
      * @return  ReverseRouter
      */
     public function createReverseRouter(){
-        
+
     }
 }

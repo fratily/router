@@ -17,40 +17,34 @@ namespace Fratily\Router;
  *
  */
 class Router{
-    
+
     private $sregex = [];
-    
-    public function __construct(array $routs){
-        foreach($routs as $name => $route){
-            if(!isset($route["path"]) || !is_string($route["path"])){
-                throw new \InvalidArgumentException();
-            }
-            
-            //ルート定義
-        }
-    }
-    
+
     public function getShortRegex(string $name){
         return $this->sregex[$name] ?? null;
     }
-    
+
     public function hasShortRegex(string $name){
         return isset($this->sregex[$name]);
     }
-    
+
     public function addShortRegex(string $name, string $class){
         if($name === ""){
             throw new \InvalidArgumentException();
         }else if(!class_exists($class)){
             throw new \InvalidArgumentException();
         }
-        
+
         $ref    = new \ReflectionClass($class);
-        
+
         if(!$ref->implementsInterface(ShortRegexInterface::class)){
             throw new \InvalidArgumentException();
         }
-        
+
         $this->sregex[$name]    = $ref->getName();
+    }
+
+    public function addRoute(string $name, string $path, array $data){
+        
     }
 }
