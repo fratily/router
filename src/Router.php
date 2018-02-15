@@ -30,7 +30,7 @@ class Router{
 
     private static $sregex  = [];
 
-    private $node   = [];
+    private $tree   = [];
 
     /**
      * 指定したIDのルールを返す
@@ -201,7 +201,12 @@ class Router{
         }
     }
 
-    public function addRoute(string $name, string $path, array $data){
+    public function addRoute(string $path, array $data){
+        $segments   = Parser::split2segments($path);
+        $node       = &$this->tree;
 
+        foreach($segments as $segment){
+
+        }
     }
 }
