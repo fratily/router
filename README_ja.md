@@ -1,218 +1,130 @@
 # Fratily Router
 
-Fratily RouterはFratilyPHPで使用される(予定の)URLルーターです。
+Fratily RouterはFratilyPHPで使用されるURLルーターです。
 
-FratilyPHPに依存しているわけではないので、
-PHP7.0以上の環境さえあればどこでも使えます。
+~~ルーティングだけでなくリバースルーティングにも対応しています。~~
+
+> **注意**  
+> 基本的にこの文中ではネームスペースを省略してクラス名を記述します。
 
 ## インストール
 
-このライブラリあなたのプロジェクトで使用する前に、
-以下のコマンドを実行してください。
+このライブラリをあなたのプロジェクトで使用する前に、以下のコマンドを実行
+してください。
 
 ``` bash
 $ composer require 'fratily/router'
 ```
 
-> cmoposer が使用可能でない場合は使用できるように努力してください。
+## ルート定義方法
 
-## 基本的な使い方
+```php
+$c  = new RouteCollector();
+
+$c->addRoute("home", "/", ["GET"]);
+$c->addRoute("mypage", "/users/my", ["GET"]);
+$c->addRoute("userpage", "/users/{id:[1-9][0-9]*}", ["GET"]);
+$c->addRoute("userupload", "/users/{id:[1-9][0-9]*}/upload", ["GET"]);
+```
+
+ルートは`RouteCollector::addRoute()`を使用して定義します。
+
+4つの引数を取り先頭の2つ以外はオプションです。先頭からルート名・一致パス
+・許容メソッド・ルートデータです。
+
+許容メソッドはこのルートが許容するHTTPメソッド名を格納した配列であり、nullを指定
+することですべてのメソッドを許容します。
+
+ルートデータはルート定義者が自由に扱える配列です。ルーティング結果にこの値が追加
+されるため、コントローラー名やアクション関数を保存しておく等に使用できます。
+
+### 許容メソッド省略方法
+
+すべてのHTTPメソッドを許容するパスは現実的ではありません。しかしルートを定義する
+たびに許容メソッド名を格納した配列を記述するのも面倒です。
+
+そんな時は`RouteCollector::get()`をはじめとした`post()`・`put()`・`patch()`
+・`delete()`といったショートカットメソッドを利用しましょう。
+
+これらのメソッドはメソッド名に応じた許容メソッドとともに
+`RouteCollector::addRoute()`を実行します。
+
+引数は先頭からルート名・一致パス・ルートデータの3つを取ります。
+
+### グループ化
+
+最初に示したルート定義方法では第1セグメントがusersのパスを3つ定義しています。
+これらをまとめて定義するために`RouteCollector::group()`が存在します。
+
+このメソッドは第一引数に共通値、第二引数にコールバック関数を取ります。
+コールバックが実行されている間だけ共通値が適用される実装になっています。
+
+共通値には2種類あり文字列が指定された場合は、コールバック内の`addRoute()`で
+定義された一致パスの先頭に共通値を結合します。
+配列が指定された場合はルートデータに共通値を追加します。
+
+コールバックは引数にRouteCollectorを受けます。
+
+### 正規表現の埋め込み
+
+`{name:regex}`構文で複数のルートに一致させることができます。
+
+nameはパラメータ名として使用され、ルーティング結果にパラメータリストとして
+取得できます。regexはその名の通り正規表現を記述する場所です。
+
+### 正規表現の埋め込み part2
+
+正規表現の埋め込みは先ほど話しましたが、パラメータとして取得する値を
+自由に書き換える方法もあります。それが**ShortRegex**です。
+
+これを使用するには`{name|sregex}`構文を記述する必要があります。
+
+nameは通常の正規表現と同じくパラメータ名ですがsregexはShortRegexの名前です。
+
+ShortRegexの実態は`ShortRegexInterface`を実装したクラスです。
+これはユーザーが自由に定義します。
+
+クラスの定義がすんだら`Router::addShortRegex()`で登録する必要があります。
+
+```php
+class DigitShortRegex implements ShortRegexInterface{
+    
+    public static function match(string $segment): bool{
+        return (bool)preg_match("/\A[1-9][0-9]*\z/");
+    }
+
+    public static function convert(string $segment){
+        return (int)$segment;
+    }
+}
+
+Router::addShortRegex("d", DigitShortRegex::class);
+
+$c->get("userpage", "/users/{id|d}");
+```
+
+## ルーティング
+
+ルーティングは以下のようにして行います。
 
 ```php
 $method = $_SERVER["REQUEST_METHOD"];
-$url    = $_SERVER["REQUEST_URI"];
+$path   = $_SERVER["REQUEST_URI"];
 
-//  すべてのルーティングルールは、このオブジェクトを使用して定義します。
-$collector  = new Fratily\Router\RouteCollector();
+$router = $c->createRouter($method);
+$result = $router->search($path);
 
-//  ルーティング処理はこのオブジェクトで行います。
-$dispatcher = new Fratily\Router\Dispatcher($collector);
-
-//  GET http://example.com/　にマッチします
-$collector->addRoute("GET", "/", [
-    "controller"    => "index",
-    "action"        => "index"
-]);
-
-//  GET http://example.com/users/　にマッチします
-$collector->addRoute("GET", "/users/", [
-    "controller"    => "user",
-    "action"        => "index"
-]);
-
-//  GET http://example.com/users/my/　と
-//  POST http://example.com/users/my/　にマッチします
-$collector->addRoute(["GET", "POST"], "users/my/", [
-    "controller"    => "user",
-    "action"        => "mypage"
-]);
-
-//  GET http://example.com/users/123/　にマッチします
-$collector->addRoute("GET", "/users/{uid:[1-9][0-9]*}/", [
-    "controller"    => "user",
-    "action"        => "page"
-]);
-
-$result = $dispatcher->dispatch($method, $url);
-
-switch($result[0]){
-    case Fratily\Router\Dispatcher::NOT_FOUND:
-        // ... 404 Not Found
+switch($result["result"]){
+    case Router::NOT_FOUND:
+        //  一致するルートがなかった
         break;
-    case Fratily\Router\Dispatcher::METHOD_NOT_ALLOWED:
-        // ... 405 Method Not Allowed
-        $allowedMethods = $result[1];
-        break;
-    case Fratily\Router\Dispatcher::FOUND:
-        $params = $result[1];   //  パラメータ
-        $data   = $result[2];   //  ルートデータ
-        //  何らかの処理
-        break;
+        
+    case Router::FOUND:
+        //  一致するルートがあった
+        $params = $result["params"];
+        $data   = $result["data"];
 }
 ```
-
-### ルート定義
-
-ルーティングルールは`RouteCollector::addRoute()`で定義します。
-
-第1引数には許可するHTTPメソッド。  
-第2引数にはマッチするURIのルール。  
-第3引数にはルートデータを定義します。
-
-第2引数の先頭のスラッシュは省略することができます。
-
-> *ルートデータとは*  
-> ルート定義者が自由に扱える配列です。  
-> MVCモデルにおけるコントローラー名や、ルート名等に使用できます。
-
-```php
-$collector->addRoute("GET", "/", [
-    "controller"    => "index",
-    "action"        => "index"
-]);
-
-$collector->addRoute("GET", "/users/", [
-    "controller"    => "user",
-    "action"        => "index"
-]);
-
-$collector->addRoute(["GET", "POST"], "users/my/", [
-    "controller"    => "user",
-    "action"        => "mypage"
-]);
-```
-
-`RouteCollector::get()`,`RouteCollector::post()`,`RouteCollector::put`,
-`RouteCollector::delete`メソッドでHTTPメソッドの指定を省略できます。
-
-```php
-$collector->get("/users/", [
-    "controller"    => "user",
-    "action"        => "index"
-]);
-```
-
-#### 正規表現の使用
-
-構文`{id:regex}`を使用することで正規表現を埋め込むことができます。
-*id* はパラメータ名、*regex* はPHPのpreg_match関数で使用する正規表現を指定します。
-
-```php
-$collector->addRoute("GET", "/users/{uid:[1-9][0-9]*}/", [
-    "controller"    => "user",
-    "action"        => "page"
-]);
-```
-
-もし第3引数で同名のパラメータが指定されている場合は、第2引数の値が優先されます。
-
-#### ShortRegexの使用
-
-IPアドレスにマッチするルーティングルールを追加するのに、
-その正規表現を`RouteCollector::addRoute()`に記述する人はいないでしょう。
-さらにそれがIPv4射影IPv6アドレスだった場合、
-ルーティングの時点でIPv4に変換できると便利です。
-
-ShortRegexはそれらを可能にします。
-
-自然数だけに一致しINT型に変換するShortRegexは以下の通りです。
-
-```php
-Fratily\Router\Dispatcher::addShortRegex("d",
-    new class implements Fratily\Router\ShortRegexInterface{
-        public function match(string $segment): bool{
-            return (bool)preg_match("/\A[1-9][0-9]*\z/", $segment);
-        }
-
-        public function convert(string $segment){
-            return (int)$segment;
-        }
-    }
-);
-
-$collector->addroute("GET", "/users/{uid|d}/", [
-    "controller"    => "user",
-    "action"        => "page"
-]);
-```
-
-ShortRegexは`Dispatcher::addShortRegex()`で登録できます。
-
-第1引数は修飾名。  
-第2引数は`Fratily\Router\ShortRegexInterface`を実装したクラスのインスタンス。
-
-#### グループ
-
-ここまでの例で、いくつかの例に共通するパーツがありました。
-
-user に関連するルールを例にとるとそれらのURIの先頭は必ず /users/になり、
-controllerの値は userになっていました。
-
-前の例程度では共通パーツを記述することはそれほど苦にはなりません。
-しかし実際にはもっと多くのルールが必要になります。
-
-共通のルールを定義するために`RouteCollector::addGroup()`で
-複数のルールをグループ化することができます。
-
-```php
-$collector->addGroup("/users", function($collector){
-    $collector->get("/", [
-        "controller"    => "user",
-        "action"        => "index"
-    ]);
-
-    $collector->addGroup(["Controller" => "user"], function($collector){
-        $r->get("/my/", [
-            "action"    => "mypage"
-        ]);
-
-        $r->get("/{uid:[1-9][0-9]*}/", [
-            "action"    => "page"
-        ]);
-    });
-});
-```
-
-グループ化による共通ルールは、
-第二引数のコールバック関数が実行される間だけ適用されます。
-
-第一引数が文字列の場合はURLの先頭への追加。配列の場合はパラメータへの追加です。
-
-ここで共通化されたパラメータは最も優先度が低く、
-ほかの定義に上書きされうることに注意してください。
-
-### 返り値
-
-`Dispatcher::dispatch()`は配列を返します。
-
-インデックス0はルーティング結果が格納されており、`Dispatcher::NOT_FOUND`,
-`Dispatcher::METHOD_NOT_ALLOWED`もしくは`Dispatcher::FOUND`の値をとります。
-
-インデックス1はパラメータリストが格納されており、正規表現などでルート内に
-埋め込んだパラメータ名をキーとする連想配列をとります。
-
-インデックス2はルートデータが格納されており、ルート定義時に第3引数で指定した値と
-グループ化で定義したデータのマージした結果をとります。
 
 ## Note
 
@@ -231,13 +143,14 @@ $router->search("GET", "/users/123/profile");   // Found
 これをFratily/Router風に書き換えると次のようになります。
 
 ```php
-Fratily\Router\Dispatcher::addShortRegex("d", new NaturalNumber());
+Router::addShortRegex("d", new NaturalNumber());
 
-$collector->get("/users/{id:[1-9][0-9]*}/", []);
-$collector->get("/users/{id|d}/profile/", []);
+$collector->get("userpage", "/users/{id:[1-9][0-9]*}/", []);
+$collector->get("userprofile", "/users/{id|d}/profile/", []);
 
-$dispatcher->dispatch("GET", "/users/123/");
-$dispatcher->dispatch("GET", "/users/123/profile/");
+$router = $collector->createRouter("GET");
+$router->search("/users/123/");
+$router->search("/users/123/profile/");
 ```
 
 Fratily/Routerではこの問題が解決され、どちらのルールも正しくマッチします。
