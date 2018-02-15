@@ -197,6 +197,14 @@ class Router{
         }
     }
 
+    /**
+     * ルートを追加する
+     *
+     * @param   string  $path
+     * @param   mixed[] $data
+     *
+     * @return  void
+     */
     public function addRoute(string $path, array $data){
         $segments   = Parser::split2segments($path);
         $nodes      = &$this->tree;
