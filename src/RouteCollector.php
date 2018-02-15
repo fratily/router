@@ -269,6 +269,10 @@ class RouteCollector{
             "allow_head"    => true
         ];
 
+        if($method === "HEAD"){
+            $method = "GET";
+        }
+
         if(!isset($this->router[$method])){
             $this->router[$method]  = new Router();
 
