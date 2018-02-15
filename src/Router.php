@@ -18,17 +18,168 @@ namespace Fratily\Router;
  */
 class Router{
 
-    private $sregex = [];
+    const FOUND             = 1;
+    const NOT_FOUND         = 2;
+    const METHOD_NOT_ALLOWD = 3;
 
-    public function getShortRegex(string $name){
-        return $this->sregex[$name] ?? null;
+    const RAW   = 1;
+    const REG   = 2;
+    const SREG  = 3;
+
+    private static $rule    = [];
+
+    private static $sregex  = [];
+
+    private $node   = [];
+
+    /**
+     * 指定したIDのルールを返す
+     *
+     * @param   string  $id
+     *
+     * @return  mixed[]|null
+     */
+    protected static function getRule(string $id){
+        return self::$rule[$id] ?? null;
     }
 
-    public function hasShortRegex(string $name){
-        return isset($this->sregex[$name]);
+    /**
+     * 指定したIDのルールタイプを返す
+     *
+     * @param   string  $id
+     *
+     * @return  int|null
+     */
+    protected static function getRuleType(string $id){
+        return self::$rule[$id]["type"] ?? null;
     }
 
-    public function addShortRegex(string $name, string $class){
+    /**
+     * 指定したIDのルールの一致確認文字列を返す
+     *
+     * @param   string  $id
+     *
+     * @return  string|null
+     */
+    protected static function getRuleMatch(string $id){
+        return self::$rule[$id]["match"] ?? null;
+    }
+
+    /**
+     * 指定したIDのルールが存在するか確認する
+     *
+     * @param   string  $id
+     *
+     * @return  bool
+     */
+    protected static function hasRule(string $id){
+        return isset(self::$rule[$id]);
+    }
+
+    /**
+     * ルールを追加してIDを返す
+     *
+     * @param   int $type
+     * @param   string  $match
+     *
+     * @return  string
+     *
+     * @throws  \InvalidArgumentException
+     */
+    protected static function addRule(int $type, string $match){
+        if($type !== self::RAW && $type !== self::REG && $type !== self::SREG){
+            throw new \InvalidArgumentException();
+        }
+
+        if($type === self::REG && preg_match("/\A[0-9A-Z%_]*\z/i")){
+            $type   = self::RAW;
+        }
+
+        $id = substr(hash("md5", $type . $match), 0, 8);
+
+        if(!isset(self::$rule[$id])){
+            self::$rule[$id]    = [
+                "type"      => $type,
+                "match"     => $match,
+                "result"    => []
+            ];
+
+            if($type === self::RAW){
+                self::$rule[$id]["result"][$match]  = true;
+            }
+        }
+
+        return $id;
+    }
+
+    /**
+     * 文字列が指定したIDのルールに一致するか確認する
+     *
+     * @param   string  $id
+     * @param   string  $segment
+     *
+     * @return  bool
+     */
+    protected static function matchRule(string $id, string $segment){
+        if(!isset(self::$rule[$id])){
+            return false;
+        }
+
+        if(!isset(self::$rule[$id]["result"][$segment])){
+            $type   = self::$rule[$id]["type"];
+            $match  = self::$rule[$id]["match"];
+            $result = false;
+
+            if($type === self::SREG){
+                if(isset(self::$sregex[$match])){
+                    $class  = self::$sregex[$match];
+                    $result = $class::match($segment);
+                }
+            }else if($type === self::REG){
+                $result = (bool)preg_match("/\A{$match}\z/", $segment);
+            }else{
+                $result = $match === $segment;
+            }
+
+            self::$rule[$id]["result"][$segment]    = $result;
+        }
+
+        return self::$rule[$id]["result"][$segment];
+    }
+
+    /**
+     * 指定した名前のShortRegexクラス名を返す
+     *
+     * @param   string  $name
+     *
+     * @return  string|null
+     */
+    public static function getShortRegex(string $name){
+        return self::$sregex[$name] ?? null;
+    }
+
+    /**
+     * 指定した名前のShortRegexクラスがあるか確認する
+     *
+     * @param   string  $name
+     *
+     * @return  bool
+     */
+    public static function hasShortRegex(string $name){
+        return isset(self::$sregex[$name]);
+    }
+
+    /**
+     * ShortRegexクラス名を登録する
+     *
+     * @param   string  $name
+     * @param   string  $class
+     *
+     * @return  void
+     *
+     * @throws  \InvalidArgumentException
+     */
+    public static function addShortRegex(string $name, string $class){
         if($name === ""){
             throw new \InvalidArgumentException();
         }else if(!class_exists($class)){
@@ -41,10 +192,16 @@ class Router{
             throw new \InvalidArgumentException();
         }
 
-        $this->sregex[$name]    = $ref->getName();
+        self::$sregex[$name]    = $ref->getName();
+
+        foreach(self::$rule as &$rule){
+            if($rule["type"] === self::SREG && $rule["match"] === $name){
+                $rule["result"] = [];
+            }
+        }
     }
 
     public function addRoute(string $name, string $path, array $data){
-        
+
     }
 }

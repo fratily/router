@@ -26,7 +26,7 @@ interface ShortRegexInterface{
      *
      * @return  bool
      */
-    public function match(string $segment): bool;
+    public static function match(string $segment): bool;
 
     /**
      * 一致したセグメントを任意の値に書き換える
@@ -35,5 +35,5 @@ interface ShortRegexInterface{
      *      書き換えるセグメント
      * @return  mixed
      */
-    public function convert(string $segment);
+    public static function convert(string $segment);
 }
