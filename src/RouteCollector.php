@@ -278,7 +278,9 @@ class RouteCollector{
 
             foreach($this->routes as $name => $route){
                 if($route["allow"] === null || isset($route["allow"][$method])){
-                    $router->addRoute($name, $route["path"], $route["data"]);
+                    $this->router[$method]->addRoute(
+                        $name, $route["path"], $route["data"]
+                    );
                 }
             }
         }
