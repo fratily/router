@@ -156,6 +156,8 @@ class RouteCollector{
             "allow" => self::normalizeMethods($allow),
             "data"  => array_merge($this->groupData, $data)
         ];
+
+        $this->router   = [];
     }
 
     /**
