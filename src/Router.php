@@ -281,7 +281,7 @@ class Router{
                         return [$params, $node["data"]];
                     }
 
-                    return false;
+                    continue;
                 }
 
                 $return = $this->searchNode($segments, $node["child"], $params);
