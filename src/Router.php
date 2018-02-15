@@ -91,10 +91,6 @@ class Router{
             throw new \InvalidArgumentException();
         }
 
-        if($type === self::REG && preg_match("/\A[0-9A-Z%_]*\z/i")){
-            $type   = self::RAW;
-        }
-
         $id = substr(hash("md5", $type . $match, false), 0, 16);
 
         if(!isset(self::$rule[$id])){
