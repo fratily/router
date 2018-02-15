@@ -228,4 +228,70 @@ class Router{
 
         $parent["data"] = $data;
     }
+
+    /**
+     * 一致するルートを探す
+     *
+     * @param   string  $path
+     *
+     * @return  mixed[]
+     */
+    public function search(string $path){
+        $result = [self::NOT_FOUND, [], []];
+        $search = $this->searchNode(
+            array_reverse(Parser::split2segments(explode("?", $path, 2)[0])),
+            $this->tree
+        );
+
+        if($search !== false){
+            $result = [self::FOUND, $search[0], $search[1]];
+        }
+
+        return $result;
+    }
+
+    /**
+     * ルーティングツリーのノードを探索する
+     *
+     * @param   string[]    $segments
+     *      セグメントごとに格納されたスタック
+     * @param   mixed[] $node
+     *      ノード
+     *
+     * @return  mixed[]|bool
+     */
+    private function searchNode(array $segments, array $nodes, array $params = []){
+        $segment    = array_pop($segments);
+
+        foreach($nodes as $rule => $node){
+            if(self::matchRule($rule, $segment)){
+                if(isset($node["param"])){   //  セグメントをパラメーターに追加
+                    if(self::getRuleType($rule) === self::SREG){
+                        $class  = self::getShortRegex(self::getRuleMatch($rule));
+                        $param  = $class::convert($segment);
+                    }else{
+                        $param  = $segment;
+                    }
+
+                    $params[$node["param"]] = $param;
+                }
+
+                if(empty($segments)){
+                    if(isset($node["data"])){
+                        return [$params, $node["data"]];
+                    }
+
+                    return false;
+                }
+
+                $return = $this->searchNode($segments, $node["child"], $params);
+
+                if($return !== false){
+                    return $return;
+                }
+            }
+        }
+
+        return false;
+    }
 }
