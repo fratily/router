@@ -95,7 +95,7 @@ class Router{
             $type   = self::RAW;
         }
 
-        $id = substr(hash("md5", $type . $match), 0, 8);
+        $id = substr(hash("md5", $type . $match, false), 0, 16);
 
         if(!isset(self::$rule[$id])){
             self::$rule[$id]    = [
