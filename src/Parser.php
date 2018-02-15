@@ -43,7 +43,7 @@ class Parser{
         $param  = null;
         $match  = $segment;
 
-        if((bool)preg_match("/\A([0-9A-Z_]+)(:|\|)(.+?)\z/i", $segment, $m)){
+        if((bool)preg_match("/\A\{([0-9A-Z_]+)(:|\|)(.+?)\}\z/i", $segment, $m)){
             $type   = $m[2] === ":" ? Router::REG : Router::SREG;
             $param  = $m[1];
             $match  = $m[3];
