@@ -199,10 +199,25 @@ class Router{
 
     public function addRoute(string $path, array $data){
         $segments   = Parser::split2segments($path);
-        $node       = &$this->tree;
+        $nodes      = &$this->tree;
 
         foreach($segments as $segment){
+            $segment    = Parser::segment($segment);
+            $rule       = self::addRule($segment["type"], $segment["match"]);
 
+            if(!isset($nodes[$rule])){
+                $nodes[$rule]   = [
+                    "rule"  => $rule,
+                    "param" => $segment["param"],
+                    "child" => [],
+                    "data"  => null
+                ];
+            }
+
+            $parent = &$nodes[$rule];
+            $nodes  = &$nodes[$rule]["child"];
         }
+
+        $parent["data"] = $data;
     }
 }
