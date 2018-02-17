@@ -21,10 +21,6 @@ class Router{
     const FOUND             = 1;
     const NOT_FOUND         = 2;
 
-    const RAW   = 1;
-    const REG   = 2;
-    const SREG  = 3;
-
     private static $rule    = [];
 
     private static $sregex  = [];
@@ -86,7 +82,7 @@ class Router{
      * @throws  \InvalidArgumentException
      */
     protected static function addRule(int $type, string $match){
-        if($type !== self::RAW && $type !== self::REG && $type !== self::SREG){
+        if($type !== Parser::RAW && $type !== Parser::REG && $type !== Parser::SREG){
             throw new \InvalidArgumentException();
         }
 
@@ -99,7 +95,7 @@ class Router{
                 "result"    => []
             ];
 
-            if($type === self::RAW){
+            if($type === Parser::RAW){
                 self::$rule[$id]["result"][$match]  = true;
             }
         }
@@ -125,12 +121,12 @@ class Router{
             $match  = self::$rule[$id]["match"];
             $result = false;
 
-            if($type === self::SREG){
+            if($type === Parser::SREG){
                 if(isset(self::$sregex[$match])){
                     $class  = self::$sregex[$match];
                     $result = $class::match($segment);
                 }
-            }else if($type === self::REG){
+            }else if($type === Parser::REG){
                 $result = (bool)preg_match("/\A{$match}\z/", $segment);
             }else{
                 $result = $match === $segment;
@@ -190,7 +186,7 @@ class Router{
         self::$sregex[$name]    = $ref->getName();
 
         foreach(self::$rule as &$rule){
-            if($rule["type"] === self::SREG && $rule["match"] === $name){
+            if($rule["type"] === Parser::SREG && $rule["match"] === $name){
                 $rule["result"] = [];
             }
         }
@@ -276,7 +272,7 @@ class Router{
         foreach($nodes as $rule => $node){
             if(self::matchRule($rule, $segment)){
                 if(isset($node["param"])){   //  セグメントをパラメーターに追加
-                    if(self::getRuleType($rule) === self::SREG){
+                    if(self::getRuleType($rule) === Parser::SREG){
                         $class  = self::getShortRegex(self::getRuleMatch($rule));
                         $param  = $class::convert($segment);
                     }else{

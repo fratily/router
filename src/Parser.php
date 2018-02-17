@@ -18,6 +18,10 @@ namespace Fratily\Router;
  */
 class Parser{
 
+    const RAW   = 1;
+    const REG   = 2;
+    const SREG  = 3;
+    
     /**
      * セグメントに分割する
      *
@@ -39,17 +43,17 @@ class Parser{
      * @return  mixed[]
      */
     public static function segment(string $segment){
-        $type   = Router::RAW;
+        $type   = self::RAW;
         $param  = null;
         $match  = $segment;
 
         if((bool)preg_match("/\A\{([0-9A-Z_]+)(:|\|)(.+?)\}\z/i", $segment, $m)){
-            $type   = $m[2] === ":" ? Router::REG : Router::SREG;
+            $type   = $m[2] === ":" ? self::REG : self::SREG;
             $param  = $m[1];
             $match  = $m[3];
 
-            if($type === Router::REG && (bool)preg_match("/\A[0-9A-Z%_]*\z/i", $match)){
-                $type   = Router::RAW;
+            if($type === self::REG && (bool)preg_match("/\A[0-9A-Z%_]*\z/i", $match)){
+                $type   = self::RAW;
             }
         }
 
