@@ -197,6 +197,17 @@ class Router{
     }
 
     /**
+     * Constructor
+     *
+     * @param   array[] $routes
+     */
+    public function __construct(array $routes){
+        foreach($routes as $route){
+            $this->addRoute($route[0], $route[1]);
+        }
+    }
+
+    /**
      * ルートを追加する
      *
      * @param   string  $path
@@ -204,7 +215,7 @@ class Router{
      *
      * @return  void
      */
-    public function addRoute(string $path, array $data){
+    protected function addRoute(string $path, array $data){
         $segments   = Parser::split2segments($path);
         $nodes      = &$this->tree;
 

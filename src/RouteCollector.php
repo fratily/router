@@ -273,15 +273,17 @@ class RouteCollector{
         }
 
         if(!isset($this->router[$method])){
-            $this->router[$method]  = new Router();
+            $routes = [];
 
             foreach($this->routes as $name => $route){
                 if($route["allow"] === null || isset($route["allow"][$method])){
-                    $this->router[$method]->addRoute(
+                    $routes[]   = [
                         $route["path"], ["_name" => $name] + $route["data"]
-                    );
+                    ];
                 }
             }
+
+            $this->router[$method]  = new Router($routes);
         }
 
         return $this->router[$method];
