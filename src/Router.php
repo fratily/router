@@ -20,7 +20,6 @@ class Router{
 
     const FOUND             = 1;
     const NOT_FOUND         = 2;
-    const METHOD_NOT_ALLOWD = 3;
 
     const RAW   = 1;
     const REG   = 2;
