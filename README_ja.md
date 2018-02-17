@@ -2,7 +2,7 @@
 
 Fratily RouterはFratilyPHPで使用されるURLルーターです。
 
-~~ルーティングだけでなくリバースルーティングにも対応しています。~~
+ルーティングだけでなくリバースルーティングにも(恐らく)対応しています。
 
 > **注意**  
 > 基本的にこの文中ではネームスペースを省略してクラス名を記述します。
@@ -124,6 +124,16 @@ switch($result["result"]){
         $params = $result["params"];
         $data   = $result["data"];
 }
+```
+
+## リバースルーティング
+
+リバースルーティングは以下のようにして行います。
+
+```php
+$reverseRouter  = $c->createReverseRouter("userpage");
+
+$path   = $reverseRouter->createPath(["id" => 123]);    //  /users/123
 ```
 
 ## Note
