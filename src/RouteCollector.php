@@ -265,11 +265,8 @@ class RouteCollector{
      *
      * @return  Router
      */
-    public function createRouter(string $method, array $option = []){
+    public function createRouter(string $method){
         $method = strtoupper($method);
-        $option = $option + [
-            "allow_head"    => true
-        ];
 
         if($method === "HEAD"){
             $method = "GET";
