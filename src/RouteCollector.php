@@ -18,272 +18,296 @@ namespace Fratily\Router;
  */
 class RouteCollector{
 
-    const RAW   = 1;
-    const REG   = 2;
-    const SREG  = 3;
-    
-    const REGEX_SEG = "/\A((?<name>[A-Za-z_][0-9A-Za-z_]*)?(?<type>:|\|))?(?<regex>.+?)\z/x";
-    
     /**
-     * @var string
+     * @var Router[]
      */
-    private $groupPrefix    = "";
-    
+    private $router = [];
+
+    /**
+     * @var ReverseRouter[]
+     */
+    private $reverseRouter  = [];
+
+    /**
+     * 許容メソッドがnullならANY、空配列なら一致なし
+     *
+     * @var mixed[][]
+     */
+    private $routes = [];
+
+    /**
+     * @var string[]
+     */
+    private $paths  = [];
+
     /**
      * @var mixed[]
      */
     private $groupData      = [];
-    
+
     /**
+     * @var string
      */
-    private $static = [];
-    
+    private $groupPrefix    = "";
+
     /**
+     * パスを統一された形式に変換する
+     *
+     * スラッシュで始まるパス文字列。
+     *
+     * @param   string  $path
+     *
+     * @return  string
+     *
+     * @todo    マルチバイト文字などパーセントエンコーディングの扱い
      */
-    private $tree   = [];
-    
+    protected static function normalizePath(string $path){
+        return substr($path, 0, 1) !== "/" ? "/{$path}" : $path;
+    }
+
     /**
-     * ルート定義をグループ化する
+     * HTTPメソッドリストを統一された形式に変換する
+     *
+     * HTTPメソッド名をキーにした配列。
+     *
+     * @param   string[]    $methods
+     *
+     * @return  bool[]|null
+     */
+    protected static function normalizeMethods(array $methods = null){
+        $return = null;
+
+        if($methods !== null){
+            $return = [];
+
+            foreach($methods as $method){
+                if(is_string($method) && $method !== ""){
+                    $return[strtoupper($method)]    = true;
+                }
+            }
+        }
+
+        return $return;
+    }
+
+    /**
+     * ルートリストを返す
+     *
+     * @return  mixed[][]
+     */
+    public function getRoutes(){
+        return $this->routes;
+    }
+
+    /**
+     * ルートを返す
+     *
+     * @param   string  $name
+     *
+     * @return  mixed[]
+     */
+    public function getRoute(string $name){
+        return $this->routes[$name] ?? null;
+    }
+
+    /**
+     * ルートが既に定義されているか確認する
+     *
+     * @param   string  $name
+     *
+     * @return  bool
+     */
+    public function hasRoute(string $name){
+        return isset($this->routes[$name]);
+    }
+
+    /**
+     * ルートを追加する
+     *
+     * 同じパスを使用するルートが定義された場合、
+     * 前に定義されたルートは上書きされる。
+     *
+     * @param   string  $name
+     * @param   string  $path
+     * @param   string[]    $allow    [optional]
+     *      許容するHTTPメソッドを持つ配列。
+     *      nullを指定した場合はすべてのメソッドを許容する。
+     * @param   mixed[] $data   [optional]
+     *      ルートに一致した場合に返される値。
+     *
+     * @return  void
+     *
+     * @throws  \LogicException
+     */
+    public function addRoute(
+        string $name,
+        string $path,
+        array $allow = null,
+        array $data = []
+    ){
+        if(isset($this->routes[$name])){
+            throw new \LogicException;
+        }
+
+        $path   = self::normalizePath($this->groupPrefix . $path);
+
+        if(isset($this->paths[$path])){
+            unset($this->routes[$this->paths[$path]]);
+        }
+
+        $this->paths[$path]     = $name;
+        $this->routes[$name]    = [
+            "path"  => $path,
+            "allow" => self::normalizeMethods($allow),
+            "data"  => array_merge($this->groupData, $data)
+        ];
+
+        $this->router   = [];
+    }
+
+    /**
+     * GETメソッドを許容するルートを追加する
+     *
+     * @param   string  $name
+     * @param   string  $path
+     * @param   mixed[] $data   [optional]
+     *      ルートに一致した場合に返される値。
+     *
+     * @return  void
+     */
+    public function get(string $name, string $path, array $data = []){
+        $this->addRoute($name, $path, ["GET"], $data);
+    }
+
+    /**
+     * POSTメソッドを許容するルートを追加する
+     *
+     * @param   string  $name
+     * @param   string  $path
+     * @param   mixed[] $data   [optional]
+     *      ルートに一致した場合に返される値。
+     *
+     * @return  void
+     */
+    public function post(string $name, string $path, array $data = []){
+        $this->addRoute($name, $path, ["POST"], $data);
+    }
+
+    /**
+     * PUTメソッドを許容するルートを追加する
+     *
+     * @param   string  $name
+     * @param   string  $path
+     * @param   mixed[] $data   [optional]
+     *      ルートに一致した場合に返される値。
+     *
+     * @return  void
+     */
+    public function put(string $name, string $path, array $data = []){
+        $this->addRoute($name, $path, ["PUT"], $data);
+    }
+
+    /**
+     * PATCHメソッドを許容するルートを追加する
+     *
+     * @param   string  $name
+     * @param   string  $path
+     * @param   mixed[] $data   [optional]
+     *      ルートに一致した場合に返される値。
+     *
+     * @return  void
+     */
+    public function patch(string $name, string $path, array $data = []){
+        $this->addRoute($name, $path, ["PATCH"], $data);
+    }
+
+    /**
+     * DELETEメソッドを許容するルートを追加する
+     *
+     * @param   string  $name
+     * @param   string  $path
+     * @param   mixed[] $data   [optional]
+     *      ルートに一致した場合に返される値。
+     *
+     * @return  void
+     */
+    public function delete(string $name, string $path, array $data = []){
+        $this->addRoute($name, $path, ["DELETE"], $data);
+    }
+
+    /**
+     * グループ化
      *
      * @param   string|mixed[]  $common
-     *      stringならばurlの先頭に指定文字列を追加し、arrayならルートデータの
-     *      共通値を設定する。arrayの場合の共通ルートデータは最も優先度が低く、
-     *      addRoute()で定義されるルートデータに上書きされる可能性がある。
      * @param   callable    $callback
-     *      このコールバック関数が実行される間だけグループ化が有効となる。
-     *      コールバックは第一引数にこのオブジェクトが渡される。
+     *
+     * @return  void
      */
-    public function addGroup($common, callable $callback){
-        if(is_string($common)){
-            $prev   = $this->groupPrefix;
+    public function group($common, callable $callback){
+        if(is_array($common)){
+            $prev               = $this->groupData;
+            $this->groupData    = array_merge($prev, $common);
+        }else if(is_string($common)){
+            $prev               = $this->groupPrefix;
             $this->groupPrefix  = $prev . $common;
-        }else if(is_array($common)){
-            $prev   = $this->groupData;
-            $this->groupData    = $common + $prev;
         }else{
-            throw new \InvalidArgumentException;
+            throw new \InvalidArgumentException();
         }
-        
+
         $callback($this);
-        
-        if(is_string($common)){
-            $this->groupPrefix  = $prev;
-        }else{
+
+        if(is_array($callback)){
             $this->groupData    = $prev;
-        }
-    }
-
-    /**
-     * ルートを定義する
-     *
-     * @param   string|string[] $methods
-     *      一致するメソッド、もしくはそのリスト。
-     * @param   string  $url
-     *      一致するURLのルール。
-     * @param   mixed[] $data
-     *      ルールーに一致した場合に返されるルートデータ。
-     */
-    public function addRoute($methods, string $url, array $data = []){
-        $methods    = array_unique(
-            array_map(
-                "strtoupper",
-                array_filter(
-                    (array)$methods,
-                    "is_string"
-                )
-            )
-        );
-        $url    = $this->groupPrefix . $url;
-        $url    = substr($url, 0, 1) === "/" ? $url : "/{$url}";
-        $data   = $data + $this->groupData;
-        $nodes  = $this->createNodes(Parser::split2segments($url));
-        
-        if(is_string($nodes)){
-            foreach($methods as $method){
-                $this->static[$method][$url]    = $data;
-            }
-        }else if(is_array($nodes)){
-            $parents    = [];
-            $first      = true;
-            
-            foreach($methods as $method){
-                if(!isset($this->tree[$method])){
-                    $this->tree[$method]    = [];
-                }
-                
-                $parents[$method] = &$this->tree[$method];
-            }
-            
-            foreach($nodes as $name => $node){
-                if($first){
-                    foreach($parents as $key => &$parent){
-                        if(!isset($parent[$name])){
-                            $parent[$name]  = $node;
-                        }
-                        
-                        $parents[$key]  = &$parent[$name];
-                    }
-                    
-                    $first  = false;
-                }else{
-                    foreach($parents as $key => &$parent){
-                        if(!isset($parent["children"][$name])){
-                            $parent["children"][$name]  = $node;
-                        }
-                        
-                        $parents[$key]  = &$parent["children"][$name];
-                    }
-                }
-            }
-            
-            foreach($parents as &$parent){
-                $parent["end"]  = array_merge($parent["end"] ?? [], $data);
-            }
-        }
-    }
-
-    /**
-     * addRoute("GET",)のショートカット
-     *
-     * @param   string  $url
-     *      一致するURLのルール。
-     * @param   mixed[] $data
-     *      ルールーに一致した場合に返されるルートデータ。
-     */
-    public function get(string $url, array $data = []){
-        $this->addRoute("GET", $url, $data);
-    }
-
-    /**
-     * addRoute("POST",)のショートカット
-     *
-     * @param   string  $url
-     *      一致するURLのルール。
-     * @param   mixed[] $data
-     *      ルールーに一致した場合に返されるルートデータ。
-     */
-    public function post(string $url, array $data = []){
-        $this->addRoute("POST", $url, $data);
-    }
-
-    /**
-     * addRoute("PUT",)のショートカット
-     *
-     * @param   string  $url
-     *      一致するURLのルール。
-     * @param   mixed[] $data
-     *      ルールーに一致した場合に返されるルートデータ。
-     */
-    public function put(string $url, array $data = []){
-        $this->addRoute("PUT", $url, $data);
-    }
-
-    /**
-     * addRoute("PATCH",)のショートカット
-     *
-     * @param   string  $url
-     *      一致するURLのルール。
-     * @param   mixed[] $data
-     *      ルールーに一致した場合に返されるルートデータ。
-     */
-    public function patch(string $url, array $data = []){
-        $this->addRoute("PATCH", $url, $data);
-    }
-
-    /**
-     * addRoute("DELETE",)のショートカット
-     *
-     * @param   string  $url
-     *      一致するURLのルール。
-     * @param   mixed[] $data
-     *      ルールーに一致した場合に返されるルートデータ。
-     */
-    public function delete(string $url, array $data = []){
-        $this->addRoute("DELETE", $url, $data);
-    }
-
-    /**
-     * addRoute("HEAD",)のショートカット
-     *
-     * @param   string  $url
-     *      一致するURLのルール。
-     * @param   mixed[] $data
-     *      ルールーに一致した場合に返されるルートデータ。
-     */
-    public function head(string $url, array $data = []){
-        $this->addRoute("HAED", $url, $data);
-    }
-
-    /**
-     * 正規表現などを使用しないルールのリストを返す
-     *
-     * @return  mixed
-     */
-    public function getStatic(){
-        return $this->static;
-    }
-
-    /**
-     * ルーティングルールの木構造データを返す
-     *
-     * @return  mixed
-     */
-    public function getTree(){
-        return $this->tree;
-    }
-    
-    /**
-     * セグメントごとのノード構造を作成する
-     * 
-     * @param   string[]    $segments
-     * 
-     * @return  string|array[]|bool
-     *      文字列が返された場合は文字列比較で一致確認できるルール。
-     *      配列にはノード構造化されたセグメントが上層から順番に格納されている。
-     */
-    private function createNodes(array $segments){
-        $static = true;
-        $nodes  = [];
-        
-        foreach($segments as $segment){
-            if(substr($segment, 0, 1) === "{" && substr($segment, -1, 1) === "}"){
-                $static     = false;
-                $segment    = 2 < strlen($segment)
-                    ? substr($segment, 1, strlen($segment) - 2)
-                    : "";
-                
-                if(!(bool)preg_match(self::REGEX_SEG, $segment, $m)){
-                    return false;
-                }
-                
-                $name   = ($m["name"] ?? "") === "" ? null : $m["name"];
-                $type   = ($m["type"] ?? ":") === ":" ? self::REG : self::SREG;
-                $rule   = $m["regex"];
-            }else{
-                $name   = null;
-                $type   = self::RAW;
-                $rule   = $segment;
-            }
-            
-            if($type === self::SREG
-                && !(bool)preg_match("/\A[A-Za-z_][0-9A-Za-z_]*\z/", $rule)
-            ){
-                return false;
-            }
-
-            $key            = hash("md5", $type . $rule . ($name ?? ""));
-            $nodes[$key]    = [
-                "type"  => $type,
-                "rule"  => $rule,
-                "name"  => $name,
-                "children"  => []
-            ];
-        }
-        
-        if($static){
-            return "/" . implode("/", $segments);
         }else{
-            return $nodes;
+            $this->groupPrefix  = $prev;
         }
+    }
+
+    /**
+     * ルーターを返す
+     *
+     * @param string $method
+     *
+     * @return  Router
+     */
+    public function createRouter(string $method){
+        $method = strtoupper($method);
+
+        if($method === "HEAD"){
+            $method = "GET";
+        }
+
+        if(!isset($this->router[$method])){
+            $routes = [];
+
+            foreach($this->routes as $name => $route){
+                if($route["allow"] === null || isset($route["allow"][$method])){
+                    $routes[]   = [
+                        $route["path"], ["_name" => $name] + $route["data"]
+                    ];
+                }
+            }
+
+            $this->router[$method]  = new Router($routes);
+        }
+
+        return $this->router[$method];
+    }
+
+    /**
+     * リバースルーターを返す
+     *
+     * @return  ReverseRouter
+     */
+    public function createReverseRouter(string $name){
+        if(!isset($this->reverseRouter[$name])){
+            if(!isset($this->routes[$name])){
+                throw new \InvalidArgumentException();
+            }
+
+            $this->reverseRouter[$name] = new ReverseRouter($this->routes[$name]["path"]);
+        }
+
+        return $this->reverseRouter[$name];
     }
 }
