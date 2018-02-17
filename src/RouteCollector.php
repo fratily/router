@@ -24,6 +24,11 @@ class RouteCollector{
     private $router = [];
 
     /**
+     * @var ReverseRouter[]
+     */
+    private $reverseRouter  = [];
+
+    /**
      * 許容メソッドがnullならANY、空配列なら一致なし
      *
      * @var mixed[][]
@@ -294,7 +299,15 @@ class RouteCollector{
      *
      * @return  ReverseRouter
      */
-    public function createReverseRouter(){
+    public function createReverseRouter(string $name){
+        if(!isset($this->reverseRouter[$name])){
+            if(!isset($this->routes[$name])){
+                throw new \InvalidArgumentException();
+            }
 
+            $this->reverseRouter[$name] = new ReverseRouter($this->routes[$name]["path"]);
+        }
+
+        return $this->reverseRouter[$name];
     }
 }
