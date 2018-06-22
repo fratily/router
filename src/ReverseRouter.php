@@ -19,32 +19,15 @@ namespace Fratily\Router;
 class ReverseRouter{
 
     /**
-     * @var mixed[]
+     * @var Route
      */
-    private $segments   = [];
-
-    /**
-     * @var string[]
-     */
-    private $params     = [];
+    private $route;
 
     /**
      * Constructor
      */
-    public function __construct(string $path){
-        $i  = 0;
-        foreach(Parser::split2segments($path) as $segment){
-            $segment    = Parser::segment($segment);
-
-            if($segment["type"] !== Parser::RAW){
-                $this->segments[$i] = null;
-                $this->params[$i]   = $segment["param"];
-            }else{
-                $this->segments[$i] = $segment["match"];
-            }
-
-            $i++;
-        }
+    public function __construct(Route $route){
+        $this->route    = $route;
     }
 
     /**
@@ -64,45 +47,41 @@ class ReverseRouter{
         array $options = []
     ){
         $path       = [];
+        $uses       = [];
         $query      = "";
         $options    = $options + [
             "numeric_prefix"    => null,
             "enc_type"          => PHP_QUERY_RFC3986
         ];
 
-        foreach($this->segments as $key => $segment){
-            if($segment !== null){
-                $path[] = $segment;
-            }else{
-                $param  = $this->params[$key];
+        foreach($this->route->getSegments() as $segment){
+            $value  = null;
 
-                if(!isset($params[$param])){
-                    throw new \InvalidArgumentException();
-                }else if(!is_scalar($params[$param])
-                    && !(
-                        is_object($params[$param])
-                        && method_exists($params[$param], "__toString")
-                    )
-                ){
+            if($segment->getName() !== null){
+                if(!array_key_exists($segment->getName(), $params)){
                     throw new \InvalidArgumentException();
                 }
 
-                $path[] = (string)$params[$param];
-
-                unset($params[$param]);
+                $value  = $params[$segment->getName()];
+                $uses[$segment->getName()] = true;
             }
+
+            $path[] = $segment->reconvert($value);
         }
 
         $path   = "/" . implode("/", $path);
-
+        $params = array_filter(
+            $params,
+            function($k) use ($uses){
+                return !array_key_exists($k, $uses);
+            },
+            ARRAY_FILTER_USE_KEY
+        );
+        
         if(!empty($params) && $addQuery){
-            $query  = http_build_query(
+            $query  = "?" . http_build_query(
                 $params, $options["numeric_prefix"], null, $options["enc_type"]
             );
-
-            if($query !== ""){
-                $query  = "?" . $query;
-            }
         }
 
         return $path . $query;
