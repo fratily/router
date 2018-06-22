@@ -138,19 +138,4 @@ class Router{
 
         return false;
     }
-
-    public function dump(Node $node = null, int $indent = 0){
-        $node   = $node ?? $this->tree;
-        foreach($node->getChildren() as $child){
-            $segment    = $child->getData("segment");
-            echo str_repeat("  ", $indent), $segment->getRule(), "(" . $segment->getType() . ")";
-
-            if($child->getData("route") !== null){
-                echo " -> ", $child->getData("route")->getName();
-            }
-            echo PHP_EOL;
-
-            $this->dump($child, $indent + 1);
-        }
-    }
 }
