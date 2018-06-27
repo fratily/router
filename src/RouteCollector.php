@@ -86,7 +86,6 @@ class RouteCollector{
      *
      * @param   string  $host
      * @param   string  $method
-     * @param   Parser\ParserInterface  $parser
      *
      * @return  Router
      */

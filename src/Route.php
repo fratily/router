@@ -146,7 +146,7 @@ class Route{
     /**
      * セグメントリストを取得する
      *
-     * @return  Parser\Segment[]
+     * @return  Segment\Segment[]
      */
     public function getSegments(){
         return Segment\Parser::getSegments($this->path);
