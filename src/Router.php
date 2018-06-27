@@ -119,19 +119,4 @@ class Router{
 
         return false;
     }
-
-    public function dump(Node $node = null, int $nest = 0){
-        $node   = $node ?? $this->tree;
-
-        foreach($node->getChildren() as $child){
-            if($child->getSegment()->getMode() === Segment\Segment::MODE_TYPE){
-                echo str_repeat("  ", $nest), ":", $child->getSegment()->getModeData();
-            }else{
-                echo str_repeat("  ", $nest), $child->getSegment()->getModeData();
-            }
-
-            echo PHP_EOL;
-            $this->dump($child, $nest + 1);
-        }
-    }
 }
