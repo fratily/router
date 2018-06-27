@@ -19,11 +19,6 @@ namespace Fratily\Router;
 class Router{
 
     /**
-     * @var Parser\ParserInterface
-     */
-    private $parser;
-
-    /**
      * @var Node
      */
     private $tree;
@@ -38,35 +33,19 @@ class Router{
      *
      * @param   array[] $routes
      */
-    public function __construct(Parser\ParserInterface $parser, array $routes){
-        $this->parser   = $parser;
+    public function __construct(array $routes){
         $this->tree     = new Node();
 
         foreach($routes as $route){
-            $this->addRoute($route);
+            $segments   = $route->getSegments();
+            $parent     = $this->tree;
+
+            foreach($segments as $segment){
+                $parent = $parent->addChild($segment);
+            }
+
+            $parent->setRoute($route);
         }
-    }
-
-    /**
-     * ルートを追加する
-     *
-     * @param   Route   $route
-     *
-     * @return  void
-     */
-    protected function addRoute(Route $route){
-        $segments   = $route->getSegments();
-        $parent     = $this->tree;
-
-        foreach($segments as $segment){
-            $node   = new Node($segment, $parent);
-
-            $parent->addChild($node);
-
-            $parent = $node;
-        }
-
-        $parent->setRoute($route);
     }
 
     /**
@@ -77,9 +56,11 @@ class Router{
      * @return  mixed[]
      */
     public function search(string $path){
+        $path   = Route::normalizePath($path);
+
         if(!array_key_exists($path, $this->cache)){
             $search = $this->searchNode(
-                array_reverse($this->parser->split2Segments($path)),
+                array_map("urldecode", array_reverse(explode("/", $path))),
                 $this->tree->getChildren()
             );
 
@@ -110,7 +91,7 @@ class Router{
 
             if($match){
                 if($node->getSegment()->getName() !== null){
-                    $_param[$node->getSegment()->getName()] = $node->getSegment()->convert($segment);
+                    $_param[$node->getSegment()->getName()] = $node->getSegment()->getValue($segment);
                 }
 
                 if(empty($segments)){
@@ -137,5 +118,20 @@ class Router{
         }
 
         return false;
+    }
+
+    public function dump(Node $node = null, int $nest = 0){
+        $node   = $node ?? $this->tree;
+
+        foreach($node->getChildren() as $child){
+            if($child->getSegment()->getMode() === Segment\Segment::MODE_TYPE){
+                echo str_repeat("  ", $nest), ":", $child->getSegment()->getModeData();
+            }else{
+                echo str_repeat("  ", $nest), $child->getSegment()->getModeData();
+            }
+
+            echo PHP_EOL;
+            $this->dump($child, $nest + 1);
+        }
     }
 }

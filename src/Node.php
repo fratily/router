@@ -29,7 +29,7 @@ class Node{
     private $children   = [];
 
     /**
-     * @var Parser\Segment
+     * @var Segment\Segment
      */
     private $segment;
 
@@ -40,14 +40,14 @@ class Node{
 
     /**
      *
-     * @param   Parser\Segment $segment
+     * @param   Segment\Segment $segment
      * @param   Node    $parent
      */
-    public function __construct(Parser\Segment $segment = null, Node $parent = null){
+    public function __construct(Segment\Segment $segment = null, Node $parent = null){
         if($parent !== null && $segment === null){
             throw new \InvalidArgumentException();
         }
-        
+
         $this->segment  = $segment;
         $this->parent   = $parent ?? $this;
     }
@@ -73,18 +73,27 @@ class Node{
     /**
      *
      *
-     * @param   Node    $child
+     * @param   Segment\Segment $segment
      *
      * @return  void
      */
-    public function addChild(Node $child){
-        $this->children[]   = $child;
+    public function addChild(Segment\Segment $segment){
+        foreach($this->children as $child){
+            if($child->segment === $segment){
+                return $child;
+            }
+        }
+
+        $node               = new Node($segment, $this);
+        $this->children[]   = $node;
+
+        return $node;
     }
 
     /**
      *
      *
-     * @return  Parser\Segment
+     * @return  Segment\Segment
      */
     public function getSegment(){
         return $this->segment;

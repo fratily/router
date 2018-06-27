@@ -90,13 +90,12 @@ class RouteCollector{
      *
      * @return  Router
      */
-    public function router(string $host, string $method, Parser\ParserInterface $parser = null){
+    public function router(string $host, string $method){
         $this->lock = true;
         $key        = "{$host}:{$method}";
 
         if(!isset($this->router[$key])){
             $this->router[$key]  = new Router(
-                $parser ?? new Parser\StandardParser(),
                 array_filter($this->routes, function($route) use ($host, $method){
                     return $route->isEnable($host, $method);
                 })
@@ -109,19 +108,20 @@ class RouteCollector{
     /**
      * リバースルーターを返す
      *
+     * @param   string  $name
+     *
      * @return  ReverseRouter
      */
-    public function reverseRouter(string $name, Parser\ParserInterface $parser = null){
+    public function reverseRouter(string $name){
         $this->lock = true;
 
         if(!isset($this->reverseRouter[$name])){
             $route  = $this->get($name);
 
-            if($route === null){
-                throw new \InvalidArgumentException();
-            }
-
-            $this->reverseRouter[$name] = new ReverseRouter($route);
+            $this->reverseRouter[$name] = $route === null
+                ? null
+                : new ReverseRouter($route)
+            ;
         }
 
         return $this->reverseRouter[$name];

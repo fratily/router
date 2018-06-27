@@ -26,67 +26,103 @@ class Route{
     ];
 
     /**
-     * @var Parser\ParserInterface
-     */
-    private $parser;
-
-    /**
      * @var string
      */
     private $path;
 
     /**
-     * @var mixed[]
-     */
-    private $data   = [];
-
-    /**
      * @var string|null
      */
-    private $host   = "*";
+    private $host;
 
     /**
      * @var string[]
      */
-    private $allows = [
-        "GET"
-    ];
+    private $allows;
 
+    /**
+     * @var mixed[]
+     */
+    private $data;
+
+    /**
+     * @var string|name
+     */
     private $name;
 
     /**
      * インスタンスを生成する
      *
-     * @param   Parser\ParserInterface  $parser
      * @param   string  $path
-     * @param   mixed[] $data
      * @param   string  $host
      * @param   string[]    $allows
+     * @param   mixed[] $data
      *
      * @return  static
      */
     public static function newInstance(
-        Parser\ParserInterface $parser,
         string $path,
-        array $data = [],
         string $host = "*",
-        $allows = ["GET"]
+        $allows = "GET",
+        array $data = []
     ){
-        return (new static($parser, $path))
-            ->withData($data)
-            ->withHost($host)
-            ->withAllows($allows)
-        ;
+        return new static($path, $host, $allows, $data);
+    }
+
+    /**
+     * パス文字列の正規化
+     *
+     * @param   string  $path
+     *
+     * @return  string
+     */
+    public static function normalizePath(string $path){
+        return substr($path, 0, 1) === "/" ? substr($path, 1) : $path;
+    }
+
+    /**
+     * メソッド一致検証配列の正規化
+     *
+     * @param   string|string[] $allows
+     *
+     * @return  mixed[]
+     */
+    public static function normalizeAllows($allows){
+        static $cache = ["GET", ["GET" => 0]];
+
+        if($allows !== $cache[0]){
+            $cache[0]   = $allows;
+            $cache[1]   = array_flip(
+                array_filter(
+                    (array)$allows,
+                    function($method){
+                        return is_string($method) && array_key_exists($method, Route::METHODS);
+                    }
+                )
+            );
+        }
+
+        return $cache[1];
     }
 
     /**
      * Constructor
      *
      * @param   string  $path
+     * @param   string  $host
+     * @param   string[]|string $allows
+     * @param   mixed[] $data
      */
-    public function __construct(Parser\ParserInterface $parser, string $path){
-        $this->parser   = $parser;
-        $this->path     = $path;
+    public function __construct(
+        string $path,
+        string $host = "*",
+        $allows = "GET",
+        array $data = []
+    ){
+        $this->path     = self::normalizePath($path);
+        $this->host     = $host;
+        $this->allows   = self::normalizeAllows($allows);
+        $this->data     = $data;
     }
 
     /**
@@ -102,7 +138,9 @@ class Route{
             $method = "GET";
         }
 
-        return fnmatch($this->host, $host) && in_array($method, $this->allows);
+        return fnmatch($this->host, $host)
+            && array_key_exists($method, $this->allows)
+        ;
     }
 
     /**
@@ -111,7 +149,7 @@ class Route{
      * @return  Parser\Segment[]
      */
     public function getSegments(){
-        return $this->parser->getSegments($this->path);
+        return Segment\Parser::getSegments($this->path);
     }
 
     /**
@@ -131,6 +169,8 @@ class Route{
      * @return  static
      */
     public function withPath(string $path){
+        $path   = self::normalizePath($path);
+
         if($this->path === $path){
             return $this;
         }
@@ -160,12 +200,6 @@ class Route{
      * @return  static
      */
     public function withHost(string $host = "*"){
-        $host   = trim($host);
-
-        if($host === ""){
-            $host   = "*";
-        }
-
         if($this->host === $host){
             return $this;
         }
@@ -195,13 +229,7 @@ class Route{
      * @throws  \InvalidArgumentException
      */
     public function withAllows($allows){
-        $allows = array_filter(array_unique((array)$allows), function($v){
-            return array_key_exists($v, Route::METHODS);
-        });
-
-        if(empty($allows)){
-            throw new \InvalidArgumentException();
-        }
+        $allows = self::normalizeAllows($allows);
 
         if($this->allows === $allows){
             return $this;
@@ -237,7 +265,7 @@ class Route{
     }
 
     /**
-     * ルート名を取得する
+     * 名前を取得する
      *
      * @return  string|null
      */
@@ -246,7 +274,7 @@ class Route{
     }
 
     /**
-     * ルート名を設定する
+     * 名前を設定する
      *
      * @param   string  $name
      *
