@@ -29,283 +29,98 @@ class RouteCollector{
     private $reverseRouter  = [];
 
     /**
-     * 許容メソッドがnullならANY、空配列なら一致なし
-     *
-     * @var mixed[][]
+     * @var Route[]
      */
     private $routes = [];
 
     /**
-     * @var string[]
+     * @var bool
      */
-    private $paths  = [];
+    private $lock   = false;
 
     /**
-     * @var mixed[]
-     */
-    private $groupData      = [];
-
-    /**
-     * @var string
-     */
-    private $groupPrefix    = "";
-
-    /**
-     * パスを統一された形式に変換する
-     *
-     * スラッシュで始まるパス文字列。
-     *
-     * @param   string  $path
-     *
-     * @return  string
-     *
-     * @todo    マルチバイト文字などパーセントエンコーディングの扱い
-     */
-    protected static function normalizePath(string $path){
-        return substr($path, 0, 1) !== "/" ? "/{$path}" : $path;
-    }
-
-    /**
-     * HTTPメソッドリストを統一された形式に変換する
-     *
-     * HTTPメソッド名をキーにした配列。
-     *
-     * @param   string[]    $methods
-     *
-     * @return  bool[]|null
-     */
-    protected static function normalizeMethods(array $methods = null){
-        $return = null;
-
-        if($methods !== null){
-            $return = [];
-
-            foreach($methods as $method){
-                if(is_string($method) && $method !== ""){
-                    $return[strtoupper($method)]    = true;
-                }
-            }
-        }
-
-        return $return;
-    }
-
-    /**
-     * ルートリストを返す
-     *
-     * @return  mixed[][]
-     */
-    public function getRoutes(){
-        return $this->routes;
-    }
-
-    /**
-     * ルートを返す
+     * ルートインスタンスを取得する
      *
      * @param   string  $name
      *
-     * @return  mixed[]
+     * @return  Route|null
      */
-    public function getRoute(string $name){
+    public function get(string $name){
         return $this->routes[$name] ?? null;
     }
 
     /**
-     * ルートが既に定義されているか確認する
+     * ルートインスタンスを追加する
      *
+     * @param   Route   $route
      * @param   string  $name
      *
-     * @return  bool
+     * @return  $this
+     *
+     * @throws  \InvalidArgumentException
      */
-    public function hasRoute(string $name){
-        return isset($this->routes[$name]);
-    }
-
-    /**
-     * ルートを追加する
-     *
-     * 同じパスを使用するルートが定義された場合、
-     * 前に定義されたルートは上書きされる。
-     *
-     * @param   string  $name
-     * @param   string  $path
-     * @param   string[]    $allow    [optional]
-     *      許容するHTTPメソッドを持つ配列。
-     *      nullを指定した場合はすべてのメソッドを許容する。
-     * @param   mixed[] $data   [optional]
-     *      ルートに一致した場合に返される値。
-     *
-     * @return  void
-     *
-     * @throws  \LogicException
-     */
-    public function addRoute(
-        string $name,
-        string $path,
-        array $allow = null,
-        array $data = []
-    ){
-        if(isset($this->routes[$name])){
+    public function add(Route $route){
+        if($this->lock){
             throw new \LogicException;
         }
 
-        $path   = self::normalizePath($this->groupPrefix . $path);
+        if($route->getName() === null){
+            do{
+                $name   = md5($route->getPath() . bin2hex(random_bytes(4)));
+            }while(array_key_exists($name, $this->routes));
 
-        if(isset($this->paths[$path])){
-            unset($this->routes[$this->paths[$path]]);
+            $route  = $route->withName($name);
         }
 
-        $this->paths[$path]     = $name;
-        $this->routes[$name]    = [
-            "path"  => $path,
-            "allow" => self::normalizeMethods($allow),
-            "data"  => array_merge($this->groupData, $data)
-        ];
-
-        $this->router   = [];
-    }
-
-    /**
-     * GETメソッドを許容するルートを追加する
-     *
-     * @param   string  $name
-     * @param   string  $path
-     * @param   mixed[] $data   [optional]
-     *      ルートに一致した場合に返される値。
-     *
-     * @return  void
-     */
-    public function get(string $name, string $path, array $data = []){
-        $this->addRoute($name, $path, ["GET"], $data);
-    }
-
-    /**
-     * POSTメソッドを許容するルートを追加する
-     *
-     * @param   string  $name
-     * @param   string  $path
-     * @param   mixed[] $data   [optional]
-     *      ルートに一致した場合に返される値。
-     *
-     * @return  void
-     */
-    public function post(string $name, string $path, array $data = []){
-        $this->addRoute($name, $path, ["POST"], $data);
-    }
-
-    /**
-     * PUTメソッドを許容するルートを追加する
-     *
-     * @param   string  $name
-     * @param   string  $path
-     * @param   mixed[] $data   [optional]
-     *      ルートに一致した場合に返される値。
-     *
-     * @return  void
-     */
-    public function put(string $name, string $path, array $data = []){
-        $this->addRoute($name, $path, ["PUT"], $data);
-    }
-
-    /**
-     * PATCHメソッドを許容するルートを追加する
-     *
-     * @param   string  $name
-     * @param   string  $path
-     * @param   mixed[] $data   [optional]
-     *      ルートに一致した場合に返される値。
-     *
-     * @return  void
-     */
-    public function patch(string $name, string $path, array $data = []){
-        $this->addRoute($name, $path, ["PATCH"], $data);
-    }
-
-    /**
-     * DELETEメソッドを許容するルートを追加する
-     *
-     * @param   string  $name
-     * @param   string  $path
-     * @param   mixed[] $data   [optional]
-     *      ルートに一致した場合に返される値。
-     *
-     * @return  void
-     */
-    public function delete(string $name, string $path, array $data = []){
-        $this->addRoute($name, $path, ["DELETE"], $data);
-    }
-
-    /**
-     * グループ化
-     *
-     * @param   string|mixed[]  $common
-     * @param   callable    $callback
-     *
-     * @return  void
-     */
-    public function group($common, callable $callback){
-        if(is_array($common)){
-            $prev               = $this->groupData;
-            $this->groupData    = array_merge($prev, $common);
-        }else if(is_string($common)){
-            $prev               = $this->groupPrefix;
-            $this->groupPrefix  = $prev . $common;
-        }else{
+        if(array_key_exists($route->getName(), $this->routes)){
             throw new \InvalidArgumentException();
         }
 
-        $callback($this);
+        $this->routes[$route->getName()]    = $route;
 
-        if(is_array($callback)){
-            $this->groupData    = $prev;
-        }else{
-            $this->groupPrefix  = $prev;
-        }
+        return $this;
     }
 
     /**
      * ルーターを返す
      *
-     * @param string $method
+     * @param   string  $host
+     * @param   string  $method
      *
      * @return  Router
      */
-    public function createRouter(string $method){
-        $method = strtoupper($method);
+    public function router(string $host, string $method){
+        $this->lock = true;
+        $key        = "{$host}:{$method}";
 
-        if($method === "HEAD"){
-            $method = "GET";
+        if(!isset($this->router[$key])){
+            $this->router[$key]  = new Router(
+                array_filter($this->routes, function($route) use ($host, $method){
+                    return $route->isEnable($host, $method);
+                })
+            );
         }
 
-        if(!isset($this->router[$method])){
-            $routes = [];
-
-            foreach($this->routes as $name => $route){
-                if($route["allow"] === null || isset($route["allow"][$method])){
-                    $routes[]   = [
-                        $route["path"], ["_name" => $name] + $route["data"]
-                    ];
-                }
-            }
-
-            $this->router[$method]  = new Router($routes);
-        }
-
-        return $this->router[$method];
+        return $this->router[$key];
     }
 
     /**
      * リバースルーターを返す
      *
+     * @param   string  $name
+     *
      * @return  ReverseRouter
      */
-    public function createReverseRouter(string $name){
-        if(!isset($this->reverseRouter[$name])){
-            if(!isset($this->routes[$name])){
-                throw new \InvalidArgumentException();
-            }
+    public function reverseRouter(string $name){
+        $this->lock = true;
 
-            $this->reverseRouter[$name] = new ReverseRouter($this->routes[$name]["path"]);
+        if(!isset($this->reverseRouter[$name])){
+            $route  = $this->get($name);
+
+            $this->reverseRouter[$name] = $route === null
+                ? null
+                : new ReverseRouter($route)
+            ;
         }
 
         return $this->reverseRouter[$name];
