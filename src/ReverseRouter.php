@@ -55,21 +55,27 @@ class ReverseRouter{
         ];
 
         foreach($this->route->getSegments() as $segment){
-            $value  = null;
-
-            if($segment->getName() !== null){
-                if(!array_key_exists($segment->getName(), $params)){
-                    throw new \InvalidArgumentException();
-                }
-
-                $value  = $params[$segment->getName()];
-                $uses[$segment->getName()] = true;
+            if(Segment\Segment::MODE_SAME === $segment->getMode()){
+                $path[] = $segment->getModeData();
+                continue;
             }
 
-            $path[] = $segment->reconvert($value);
+            if(null === $segment->getName()){
+                throw new \LogicException;  // パラメータ部分に名前がついていないのでどうしようもない
+            }
+
+            if(!array_key_exists($segment->getName(), $params)){
+                throw new \LogicException;  // 埋め込めるパラメータがない
+            }
+
+            if(!$segment->isMatch($params[$segment->getName()])){
+                throw new \LogicException;  // パラメータの値がセグメントに対して正しくない
+            }
+
+            $uses[$segment->getName()]  = true;
+            $path[]                     = $params[$segment->getName()];
         }
 
-        $path   = "/" . implode("/", $path);
         $params = array_filter(
             $params,
             function($k) use ($uses){
@@ -77,13 +83,13 @@ class ReverseRouter{
             },
             ARRAY_FILTER_USE_KEY
         );
-        
+
         if(!empty($params) && $addQuery){
             $query  = "?" . http_build_query(
                 $params, $options["numeric_prefix"], null, $options["enc_type"]
             );
         }
 
-        return $path . $query;
+        return "/" . implode("/", $path) . $query;
     }
 }
