@@ -39,6 +39,15 @@ class RouteCollector{
     private $lock   = false;
 
     /**
+     * 全てのルートインスタンスを取得する
+     *
+     * @return  Route[]
+     */
+    public function getAll(){
+        return $this->routes;
+    }
+
+    /**
      * ルートインスタンスを取得する
      *
      * @param   string  $name
