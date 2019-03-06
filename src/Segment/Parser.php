@@ -18,22 +18,30 @@ namespace Fratily\Router\Segment;
  */
 class Parser{
 
+    public function __construct(SegmentBuilder $builder){
+    }
+
     /**
-     * セグメントリストを取得する
-     *
-     * @param   string  $path
-     *
-     * @return  Segment[]
+     * @param string $path
+     * @return array
      */
-    public static function getSegments(string $path){
+    public function parse(string $path): array{
+        $path       = "/" === mb_substr($path, 0, 1) ? $path : "/{$path}";
         $segments   = [];
-        $i          = 1;
 
         foreach(explode("/", $path) as $segment){
-            $segments[]  = static::getSegment($segment, $i++);
+            $segments[] = $this->generateSegment($segment);
         }
 
         return $segments;
+    }
+
+    /**
+     * @param string $segment
+     * @return Segment
+     */
+    public function generateSegment(string $segment): Segment{
+
     }
 
     /**

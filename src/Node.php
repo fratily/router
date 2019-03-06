@@ -23,15 +23,15 @@ class Node{
      */
     private $parent;
 
+    private $segment;
+
+    private $methods    = [];
+
     /**
      * @var Node[]
      */
     private $children   = [];
 
-    /**
-     * @var Segment\Segment
-     */
-    private $segment;
 
     /**
      * @var Route
