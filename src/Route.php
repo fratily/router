@@ -18,158 +18,97 @@ namespace Fratily\Router;
  */
 class Route{
 
-    const METHODS   = [
-        "GET"       => true,
-        "POST"      => true,
-        "PUT"       => true,
-        "DELETE"    => true,
-    ];
+    public const DEFAULT_HOST       = "*";
 
-    /**
-     * @var string
-     */
-    private $path;
+    public const DEFAULT_METHODS    = ["GET"];
+
+    public const ALLOW_METHODS      = [
+        "GET",
+        "HEAD",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+    ];
 
     /**
      * @var string|null
      */
-    private $host;
+    private $name;
+
+    /**
+     * @var string|null
+     */
+    private $path;
+
+    /**
+     * @var string
+     */
+    private $host   = self::DEFAULT_HOST;
 
     /**
      * @var string[]
      */
-    private $allows;
+    private $methods    = self::DEFAULT_METHODS;
 
     /**
-     * @var mixed[]
+     * @var mixed
      */
-    private $data;
+    private $payload;
 
     /**
-     * @var string|name
-     */
-    private $name;
-
-    /**
-     * インスタンスを生成する
+     * Get name.
      *
-     * @param   string  $path
-     * @param   string  $host
-     * @param   string[]    $allows
-     * @param   mixed[] $data
+     * @return  string|null
+     */
+    public function getName(): ?string{
+        return $this->name;
+    }
+
+    /**
+     * With name.
+     *
+     * @param   string  $name
      *
      * @return  static
      */
-    public static function newInstance(
-        string $path,
-        string $host = "*",
-        $allows = "GET",
-        array $data = []
-    ){
-        return new static($path, $host, $allows, $data);
-    }
+    public function withName(string $name): self{
+        if($this->name === $name){
+            return $this;
+        }
 
-    /**
-     * パス文字列の正規化
-     *
-     * @param   string  $path
-     *
-     * @return  string
-     */
-    public static function normalizePath(string $path){
-        return substr($path, 0, 1) === "/" ? substr($path, 1) : $path;
-    }
-
-    /**
-     * メソッド一致検証配列の正規化
-     *
-     * @param   string|string[] $allows
-     *
-     * @return  mixed[]
-     */
-    public static function normalizeAllows($allows){
-        static $cache = ["GET", ["GET" => 0]];
-
-        if($allows !== $cache[0]){
-            $cache[0]   = $allows;
-            $cache[1]   = array_flip(
-                array_filter(
-                    (array)$allows,
-                    function($method){
-                        return is_string($method) && array_key_exists($method, Route::METHODS);
-                    }
-                )
+        if("" === $name){
+            throw new \InvalidArgumentException(
+                "Empty string cant use to route name."
             );
         }
 
-        return $cache[1];
+        $clone          = clone $this;
+        $clone->name    = $name;
+
+        return $clone;
     }
 
     /**
-     * Constructor
+     * Get path.
      *
-     * @param   string  $path
-     * @param   string  $host
-     * @param   string[]|string $allows
-     * @param   mixed[] $data
+     * @return  string|null
      */
-    public function __construct(
-        string $path,
-        string $host = "*",
-        $allows = "GET",
-        array $data = []
-    ){
-        $this->path     = self::normalizePath($path);
-        $this->host     = $host;
-        $this->allows   = self::normalizeAllows($allows);
-        $this->data     = $data;
-    }
-
-    /**
-     * 指定ホストとメソッドでこのルートが有効か確認する
-     *
-     * @param   string  $host
-     * @param   string  $method
-     *
-     * @return  bool
-     */
-    public function isEnable(string $host, string $method){
-        if($method === "HEAD"){
-            $method = "GET";
-        }
-
-        return fnmatch($this->host, $host)
-            && array_key_exists($method, $this->allows)
-        ;
-    }
-
-    /**
-     * セグメントリストを取得する
-     *
-     * @return  Segment\Segment[]
-     */
-    public function getSegments(){
-        return Segment\Parser::getSegments($this->path);
-    }
-
-    /**
-     * パスを取得する
-     *
-     * @return  string
-     */
-    public function getPath(){
+    public function getPath(): ?string{
         return $this->path;
     }
 
     /**
-     * パスを設定する
+     * With path.
      *
      * @param   string  $path
      *
      * @return  static
      */
-    public function withPath(string $path){
-        $path   = self::normalizePath($path);
+    public function withPath(string $path): self{
+        if("/" !== mb_substr($path, 0, 1)){
+            $path   = "/" . $path;
+        }
 
         if($this->path === $path){
             return $this;
@@ -182,24 +121,22 @@ class Route{
     }
 
     /**
-     * ホストを取得する
+     * Get host.
      *
-     * @return  string|null
+     * @return  string
      */
-    public function getHost(){
+    public function getHost(): string{
         return $this->host;
     }
 
     /**
-     * ホストを設定する
-     *
-     * シェルワイルドカード構文を用いる。空文字の場合は全てにマッチ。
+     * With host.
      *
      * @param   string  $host
      *
      * @return  static
      */
-    public function withHost(string $host = "*"){
+    public function withHost(string $host): self{
         if($this->host === $host){
             return $this;
         }
@@ -211,85 +148,56 @@ class Route{
     }
 
     /**
-     * 許容メソッドを取得する
+     * Get methods.
      *
      * @return  string[]
      */
-    public function getAllows(){
-        return $this->allows;
+    public function getMethods(): array{
+        return $this->methods;
     }
 
     /**
-     * 許容メソッドを設定する
+     * With methods.
      *
-     * @param   string[]    $allows
+     * @param   string[]    $methods
      *
      * @return  static
-     *
-     * @throws  \InvalidArgumentException
      */
-    public function withAllows($allows){
-        $allows = self::normalizeAllows($allows);
-
-        if($this->allows === $allows){
-            return $this;
+    public function withMethods(array $methods): self{
+        foreach($methods as $method){
+            if(!in_array($method, self::ALLOW_METHODS)){
+                throw new \InvalidArgumentException(
+                    "{$method} cant use route allow methods. useful methods is "
+                        . implode(", ", self::ALLOW_METHODS)
+                );
+            }
         }
 
         $clone          = clone $this;
-        $clone->allows  = $allows;
+        $clone->methods = $methods;
 
         return $clone;
     }
 
     /**
-     * データを取得する
+     * Get payload.
      *
-     * @return  mixed[]
+     * @return  mixed
      */
-    public function getData(){
-        return $this->data;
+    public function getPayload(){
+        return $this->payload;
     }
 
     /**
-     * データを設定する
+     * With payload.
      *
-     * @param   mixed[] $data
+     * @param   mixed   $payload
      *
      * @return  static
      */
-    public function withData(array $data = []){
+    public function withPayload($payload): self{
         $clone          = clone $this;
-        $clone->data    = $data;
-
-        return $clone;
-    }
-
-    /**
-     * 名前を取得する
-     *
-     * @return  string|null
-     */
-    public function getName(){
-        return $this->name;
-    }
-
-    /**
-     * 名前を設定する
-     *
-     * @param   string  $name
-     *
-     * @return  static|$this
-     */
-    public function withName(string $name = null){
-        $name   = trim($name ?? "");
-        $name   = $name === "" ? null : $name;
-
-        if($this->name === $name){
-            return $this;
-        }
-
-        $clone          = clone $this;
-        $clone->name    = $name;
+        $clone->payload = $payload;
 
         return $clone;
     }
