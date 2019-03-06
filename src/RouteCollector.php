@@ -19,14 +19,9 @@ namespace Fratily\Router;
 class RouteCollector{
 
     /**
-     * @var Router[]
+     * @var Node
      */
-    private $router = [];
-
-    /**
-     * @var ReverseRouter[]
-     */
-    private $reverseRouter  = [];
+    private $tree;
 
     /**
      * @var Route[]
@@ -34,52 +29,33 @@ class RouteCollector{
     private $routes = [];
 
     /**
-     * @var bool
-     */
-    private $lock   = false;
-
-    /**
-     * 全てのルートインスタンスを取得する
+     * Get all routes.
      *
      * @return  Route[]
      */
-    public function getAll(){
-        return $this->routes;
+    public function all(): array{
+        $this->routes;
     }
 
     /**
-     * ルートインスタンスを取得する
+     * Get route.
      *
      * @param   string  $name
      *
      * @return  Route|null
      */
-    public function get(string $name){
+    public function get(string $name): ?Route{
         return $this->routes[$name] ?? null;
     }
 
     /**
-     * ルートインスタンスを追加する
+     * Add route.
      *
      * @param   Route   $route
-     * @param   string  $name
      *
      * @return  $this
-     *
-     * @throws  \InvalidArgumentException
      */
-    public function add(Route $route){
-        if($this->lock){
-            throw new \LogicException;
-        }
-
-        if($route->getName() === null){
-            do{
-                $name   = md5($route->getPath() . bin2hex(random_bytes(4)));
-            }while(array_key_exists($name, $this->routes));
-
-            $route  = $route->withName($name);
-        }
+    public function add(Route $route): self{
 
         if(array_key_exists($route->getName(), $this->routes)){
             throw new \InvalidArgumentException();
@@ -91,47 +67,13 @@ class RouteCollector{
     }
 
     /**
-     * ルーターを返す
-     *
-     * @param   string  $host
-     * @param   string  $method
-     *
-     * @return  Router
-     */
-    public function router(string $host, string $method){
-        $this->lock = true;
-        $key        = "{$host}:{$method}";
-
-        if(!isset($this->router[$key])){
-            $this->router[$key]  = new Router(
-                array_filter($this->routes, function($route) use ($host, $method){
-                    return $route->isEnable($host, $method);
-                })
-            );
-        }
-
-        return $this->router[$key];
-    }
-
-    /**
-     * リバースルーターを返す
+     * Remove route.
      *
      * @param   string  $name
      *
-     * @return  ReverseRouter
+     * @return  $this
      */
-    public function reverseRouter(string $name){
-        $this->lock = true;
+    public function remove(string $name): self{
 
-        if(!isset($this->reverseRouter[$name])){
-            $route  = $this->get($name);
-
-            $this->reverseRouter[$name] = $route === null
-                ? null
-                : new ReverseRouter($route)
-            ;
-        }
-
-        return $this->reverseRouter[$name];
     }
 }
