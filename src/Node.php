@@ -23,110 +23,148 @@ class Node{
      */
     private $parent;
 
-    private $segment;
-
-    private $methods    = [];
-
     /**
      * @var Node[]
      */
     private $children   = [];
 
-
     /**
-     * @var Route
+     * @var Segment
      */
-    private $route;
+    private $segment;
 
     /**
+     * @var Route[]
+     */
+    private $routes = [];
+
+    /**
+     * Constructor.
      *
-     * @param   Segment\Segment $segment
-     * @param   Node    $parent
+     * @param   Segment $segment
+     * @param   Node|null   $parent
+     *
      */
-    public function __construct(Segment\Segment $segment = null, Node $parent = null){
-        if($parent !== null && $segment === null){
-            throw new \InvalidArgumentException();
-        }
-
+    public function __construct(Segment $segment, ?Node $parent){
         $this->segment  = $segment;
         $this->parent   = $parent ?? $this;
     }
 
     /**
+     * Is root.
      *
+     * @return  bool
+     */
+    public function isRoot(): bool{
+        return $this->parent === $this;
+    }
+
+    /**
+     * Get parent node.
      *
      * @return  Node
      */
-    public function getParent(){
+    public function getParent(): Node{
         return $this->parent;
     }
 
     /**
-     *
+     * Get child nodes.
      *
      * @return  Node[]
      */
-    public function getChildren(){
+    public function getChildren(): array{
         return $this->children;
     }
 
     /**
+     * Get child.
      *
+     * @param   Segment $segment
      *
-     * @param   Segment\Segment $segment
-     *
-     * @return  void
+     * @return  Node|null
      */
-    public function addChild(Segment\Segment $segment){
-        foreach($this->children as $child){
-            if($child->segment === $segment){
-                return $child;
-            }
-        }
-
-        $node               = new Node($segment, $this);
-        $this->children[]   = $node;
-
-        return $node;
+    public function getChild(Segment $segment): ?Node{
+        return $this->children[$segment->getDefinition()] ?? null;
     }
 
     /**
+     * Add child.
      *
+     * @param   Segment $segment
      *
-     * @return  Segment\Segment
+     * @return  $this
      */
-    public function getSegment(){
+    public function addChild(Segment $segment): self{
+        if(!array_key_exists($segment->getDefinition(), $this->getChildren())){
+            $this->children[$segment->getDefinition()]  = new Node($segment, $this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Remove child.
+     *
+     * @param   Segment $segment
+     *
+     * @return  $this
+     */
+    public function removeChild(Segment $segment): self{
+        if(array_key_exists($segment->getDefinition(), $this->getChildren())){
+            unset($this->children[$segment->getDefinition()]);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get segment.
+     *
+     * @return  Segment
+     */
+    public function getSegment(): Segment{
         return $this->segment;
     }
 
     /**
+     * Get routes.
      *
-     *
-     * @return  Route|null
+     * @return  Route[]
      */
-    public function getRoute(){
-        return $this->route;
+    public function getRoutes(): array{
+        return $this->routes;
     }
 
     /**
-     *
+     * Add route.
      *
      * @param   Route   $route
      *
-     * @return  void
+     * @return  $this
      */
-    public function setRoute(Route $route){
-        $this->route    = $route;
+    public function addRoute(Route $route): self{
+        if(array_key_exists($route->getName(), $this->routes)){
+            return $this;
+        }
+
+        $this->routes[$route->getName()]    = $route;
+
+        return $this;
     }
 
     /**
+     * Remove route.
      *
+     * @param   Route   $route
      *
-     * @param   string  $segment
-     *
-     * @return  bool
+     * @return  $this
      */
-    public function isMatch(string $segment){
-        return $this->segment->isMatch($segment);
+    public function removeRoute(Route $route): self{
+        if(array_key_exists($route->getName(), $this->routes)){
+            unset($this->routes[$route->getName()]);
+        }
+
+        return $this;
     }
 }
