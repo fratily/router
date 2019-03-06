@@ -19,6 +19,11 @@ namespace Fratily\Router;
 class Segment{
 
     /**
+     * @var string
+     */
+    private $definition;
+
+    /**
      * @var string|null
      */
     private $name;
@@ -39,7 +44,8 @@ class Segment{
      * @param   string  $segment
      */
     public function __construct(string $segment){
-        $atSignPos  = mb_strpos($segment, "@");
+        $this->definition   = $segment;
+        $atSignPos          = mb_strpos($segment, "@");
 
         if(false !== $atSignPos){
             if(
@@ -74,6 +80,15 @@ class Segment{
                 }
             }
         }
+    }
+
+    /**
+     * Get definition.
+     *
+     * @return  string
+     */
+    public function getDefinition(): string{
+        return $this->definition;
     }
 
     /**

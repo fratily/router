@@ -39,6 +39,7 @@ class SegmentTest extends TestCase{
     ){
         $instance   = new Segment($segment);
 
+        $this->assertSame($segment, $instance->getDefinition());
         $this->assertSame($expectedName, $instance->getName());
         $this->assertSame($expectedComparator, $instance->getComparator());
         $this->assertSame($expectedSame, $instance->getSame());
