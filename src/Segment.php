@@ -13,10 +13,14 @@
  */
 namespace Fratily\Router;
 
+use Fratily\Router\Exception\InvalidSegmentException;
+
 /**
  *
  */
 class Segment{
+
+    private const SEGMENT_REGEX = "/\A([A-Z_][0-9A-Z_]*)(?:(@|:)([^[:cntrl:]]+))?\z/i";
 
     /**
      * @var string
@@ -26,17 +30,22 @@ class Segment{
     /**
      * @var string|null
      */
+    private $same;
+
+    /**
+     * @var string|null
+     */
     private $name;
 
     /**
      * @var string|null
      */
-    private $comparator;
+    private $regex;
 
     /**
      * @var string|null
      */
-    private $same;
+    private $filter;
 
     /**
      * Constructor.
@@ -45,39 +54,24 @@ class Segment{
      */
     public function __construct(string $segment){
         $this->definition   = $segment;
-        $atSignPos          = mb_strpos($segment, "@");
 
-        if(false !== $atSignPos){
-            if(
-                0 !== $atSignPos
-                && "\\" === mb_substr($segment, $atSignPos - 1, $atSignPos)
-            ){
-                // At sign escaped.
-                $segment    = mb_substr($segment, 0, $atSignPos - 1)
-                    . mb_substr($segment, $atSignPos)
-                ;
-            }else{
-                $this->comparator   = mb_substr($segment, $atSignPos + 1);
-                $segment            = mb_substr($segment, 0, $atSignPos);
-            }
-        }
-
-        if(":" === mb_substr($segment, 0, 1)){
-            $this->name = mb_substr($segment, 1);
-        }else{
-            if("\\:" === mb_substr($segment, 0, 2)){
-                $segment    = mb_substr($segment, 1);
-            }
-
+        if("{" !== mb_substr($segment, 0, 1) || "}" !== mb_substr($segment, -1)){
             $this->same = $segment;
 
-            if(null !== $this->comparator){
-                if("" === $this->same){
-                    $this->same = null;
-                }else{
-                    $this->same         = "{$this->same}@{$this->comparator}";
-                    $this->comparator   = null;
-                }
+            return;
+        }
+
+        if(1 !== preg_match(self::SEGMENT_REGEX, mb_substr($segment, 1, -1), $m)){
+            throw new InvalidSegmentException("'{$segment}' is invalid segment.");
+        }
+
+        $this->name = $m[1];
+
+        if(isset($m[2])){
+            if(":" === $m[2]){
+                $this->regex    = $m[3];
+            }else{
+                $this->filter   = $m[3];
             }
         }
     }
@@ -92,6 +86,15 @@ class Segment{
     }
 
     /**
+     * Get same.
+     *
+     * @return  string|null
+     */
+    public function getSame(): ?string{
+        return $this->same;
+    }
+
+    /**
      * Get name.
      *
      * @return  string|null
@@ -101,20 +104,20 @@ class Segment{
     }
 
     /**
-     * Get comparator name.
+     * Get regex.
      *
      * @return  string|null
      */
-    public function getComparator(): ?string{
-        return $this->comparator;
+    public function getRegex(): ?string{
+        return $this->regex;
     }
 
     /**
-     * Get same.
+     * Get filter.
      *
      * @return  string|null
      */
-    public function getSame(): ?string{
-        return $this->same;
+    public function getFilter(): ?string{
+        return $this->filter;
     }
 }

@@ -13,6 +13,7 @@
  */
 namespace Fratily\Tests\Router;
 
+use Fratily\Router\Exception\InvalidSegmentException;
 use Fratily\Router\Segment;
 use PHPUnit\Framework\TestCase;
 
@@ -23,9 +24,10 @@ class SegmentTest extends TestCase{
 
     /**
      * @param   string  $segment
-     * @param   string|null $expectedName
-     * @param   string|null $expectedComparator
      * @param   string|null $expectedSame
+     * @param   string|null $expectedName
+     * @param   string|null $expectedRegex
+     * @param   string|null $expectedFilter
      *
      * @return  void
      *
@@ -33,28 +35,52 @@ class SegmentTest extends TestCase{
      */
     public function testGenerateSegmentInstance(
         string $segment,
+        ?string $expectedSame,
         ?string $expectedName,
-        ?string $expectedComparator,
-        ?string $expectedSame
+        ?string $expectedRegex,
+        ?string $expectedFilter
     ){
         $instance   = new Segment($segment);
 
         $this->assertSame($segment, $instance->getDefinition());
-        $this->assertSame($expectedName, $instance->getName());
-        $this->assertSame($expectedComparator, $instance->getComparator());
         $this->assertSame($expectedSame, $instance->getSame());
+        $this->assertSame($expectedName, $instance->getName());
+        $this->assertSame($expectedRegex, $instance->getRegex());
+        $this->assertSame($expectedFilter, $instance->getFilter());
     }
 
     public function provideGenerateSegmentInstanceData(){
         return [
-            "name only"           => [":name",            "name", null,         null],
-            "comparator only"     => ["@comparator",      null,   "comparator", null],
-            "same only"           => ["same",             null,   null,         "same"],
-            "name and comparator" => [":name@comparator", "name", "comparator", null],
-            "escaped colon(name)" => ["\\:name",          null,   null,         ":name"],
-            "same with at sign"   => ["\\@same",          null,   null,         "@same"],
-            "at sign in same"     => ["same@comparator",  null,   null,         "same@comparator"],
-            "colon in same"       => ["same:name",        null,   null,         "same:name"],
+            "empty"         => ["",              "",      null,   null,    null],
+            "same"          => ["same",          "same",  null,   null,    null],
+            "same start {"  => ["{same",         "{same", null,   null,    null],
+            "same end {"    => ["same}",         "same}", null,   null,    null],
+            "name"          => ["{name}",        null,    "name", null,    null],
+            "regex"         => ["{name:regex}",  null,    "name", "regex", null],
+            "filter"        => ["{name@filter}", null,    "name", null,    "filter"],
+        ];
+    }
+
+    /**
+     * @param   string  $segment
+     *
+     * @return  void
+     *
+     * @dataProvider   provideGenerateSegmentInstanceWithInvalidSegmentData
+     */
+    public function testGenerateSegmentInstanceWithInvalidSegment($segment){
+        $this->expectException(InvalidSegmentException::class);
+
+        new Segment($segment);
+    }
+
+    public function provideGenerateSegmentInstanceWithInvalidSegmentData(){
+        return [
+            "empty"                         => ["{}"],
+            "dont have name case regex"     => ["{:regex}"],
+            "dont have name case filter"    => ["{@filter}"],
+            "invalid name"                  => ["{0a}"],
+            "invalid name 2"                => ["{aa-bb}"],
         ];
     }
 }
