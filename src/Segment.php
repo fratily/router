@@ -56,7 +56,7 @@ class Segment{
         $this->definition   = $segment;
 
         if("{" !== mb_substr($segment, 0, 1) || "}" !== mb_substr($segment, -1)){
-            $this->same = $segment;
+            $this->same = rawurldecode($segment);
 
             return;
         }
@@ -87,6 +87,8 @@ class Segment{
 
     /**
      * Get same.
+     *
+     * Already url decoded.
      *
      * @return  string|null
      */

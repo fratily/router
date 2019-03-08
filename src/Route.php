@@ -57,6 +57,31 @@ class Route{
     private $payload;
 
     /**
+     * @var mixed[]
+     */
+    private $parameters = [];
+
+    /**
+     * @var int
+     */
+    private $number;
+
+    public function __construct(){
+        static $cnt = 0;
+
+        $this->number   = ++$cnt;
+    }
+
+    /**
+     * Get number.
+     *
+     * @return  int
+     */
+    public function getNumber(): int{
+        return $this->number;
+    }
+
+    /**
      * Get name.
      *
      * @return  string|null
@@ -198,6 +223,43 @@ class Route{
     public function withPayload($payload): self{
         $clone          = clone $this;
         $clone->payload = $payload;
+
+        return $clone;
+    }
+
+    /**
+     * Get parameter.
+     *
+     * @param   string  $key
+     *
+     * @return  mixed|null
+     */
+    public function getParameter(string $key){
+        return $this->parameters[$key] ?? null;
+    }
+
+    /**
+     * Has parameter.
+     *
+     * @param   string  $key
+     *
+     * @return  bool
+     */
+    public function hasParameter(string $key): bool{
+        return array_key_exists($key, $this->parameters);
+    }
+
+    /**
+     * With parameter.
+     *
+     * @param   string  $key
+     * @param   mixed   $value
+     *
+     * @return  static
+     */
+    public function withParameter(string $key, $value): self{
+        $clone  = $this;
+        $clone->parameters[$key]    = $value;
 
         return $clone;
     }

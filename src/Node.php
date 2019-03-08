@@ -34,7 +34,7 @@ class Node{
     private $segment;
 
     /**
-     * @var Route[]
+     * @var \SplObjectStorage|Route[]
      */
     private $routes = [];
 
@@ -48,6 +48,7 @@ class Node{
     public function __construct(Segment $segment, ?Node $parent){
         $this->segment  = $segment;
         $this->parent   = $parent ?? $this;
+        $this->routes   = new \SplObjectStorage();
     }
 
     /**
@@ -80,24 +81,24 @@ class Node{
     /**
      * Get child.
      *
-     * @param   Segment $segment
+     * @param   string  $segment
      *
      * @return  Node|null
      */
-    public function getChild(Segment $segment): ?Node{
-        return $this->children[$segment->getDefinition()] ?? null;
+    public function getChild(string $segment): ?Node{
+        return $this->children[$segment] ?? null;
     }
 
     /**
      * Add child.
      *
-     * @param   Segment $segment
+     * @param   string  $segment
      *
      * @return  $this
      */
-    public function addChild(Segment $segment): self{
-        if(!array_key_exists($segment->getDefinition(), $this->getChildren())){
-            $this->children[$segment->getDefinition()]  = new Node($segment, $this);
+    public function addChild(string $segment): self{
+        if(!array_key_exists($segment, $this->getChildren())){
+            $this->children[$segment]  = new Node(new Segment($segment), $this);
         }
 
         return $this;
@@ -106,13 +107,13 @@ class Node{
     /**
      * Remove child.
      *
-     * @param   Segment $segment
+     * @param   string  $segment
      *
      * @return  $this
      */
-    public function removeChild(Segment $segment): self{
-        if(array_key_exists($segment->getDefinition(), $this->getChildren())){
-            unset($this->children[$segment->getDefinition()]);
+    public function removeChild(string $segment): self{
+        if(array_key_exists($segment, $this->getChildren())){
+            unset($this->children[$segment]);
         }
 
         return $this;
@@ -132,8 +133,8 @@ class Node{
      *
      * @return  Route[]
      */
-    public function getRoutes(): array{
-        return $this->routes;
+    public function getRoutes(): iterable{
+        yield from $this->routes;
     }
 
     /**
