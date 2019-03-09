@@ -100,4 +100,23 @@ class RouteTest extends TestCase{
         $sameRoute  = $this->route->withPayload("payload");
         $this->assertNotSame($sameRoute, $this->route);
     }
+
+    public function testParameter(){
+        $this->assertSame([], $this->route->getParameters());
+        $this->assertSame(null, $this->route->getParameter("key"));
+        $this->assertSame(false, $this->route->hasParameter("key"));
+
+        $this->route->withParameter("key", "value");
+        $this->assertSame([], $this->route->getParameters());
+        $this->assertSame(null, $this->route->getParameter("key"));
+        $this->assertSame(false, $this->route->hasParameter("key"));
+
+        $this->route    = $this->route->withParameter("key", "value");
+        $this->assertSame(["key" => "value"], $this->route->getParameters());
+        $this->assertSame("value", $this->route->getParameter("key"));
+        $this->assertSame(true, $this->route->hasParameter("key"));
+
+        $notSameRoute  = $this->route->withParameter("key", "value");
+        $this->assertNotSame($notSameRoute, $this->route);
+    }
 }
