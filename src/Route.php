@@ -228,6 +228,15 @@ class Route{
     }
 
     /**
+     * Get parameters.
+     *
+     * @return  mixed[]
+     */
+    public function getParameters(): array{
+        return $this->parameters;
+    }
+
+    /**
      * Get parameter.
      *
      * @param   string  $key
@@ -258,7 +267,7 @@ class Route{
      * @return  static
      */
     public function withParameter(string $key, $value): self{
-        $clone  = $this;
+        $clone                      = clone $this;
         $clone->parameters[$key]    = $value;
 
         return $clone;
