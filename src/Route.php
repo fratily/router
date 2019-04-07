@@ -66,6 +66,10 @@ class Route{
      */
     private $number;
 
+    public static function get(){
+
+    }
+
     public function __construct(){
         static $cnt = 0;
 

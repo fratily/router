@@ -16,10 +16,10 @@ namespace Fratily\Router;
 /**
  *
  */
-class Node{
+final class Node{
 
     /**
-     * @var Node
+     * @var Node|null
      */
     private $parent;
 
@@ -34,11 +34,6 @@ class Node{
     private $segment;
 
     /**
-     * @var \SplObjectStorage|Route[]
-     */
-    private $routes = [];
-
-    /**
      * Constructor.
      *
      * @param   Segment $segment
@@ -47,17 +42,7 @@ class Node{
      */
     public function __construct(Segment $segment, ?Node $parent){
         $this->segment  = $segment;
-        $this->parent   = $parent ?? $this;
-        $this->routes   = new \SplObjectStorage();
-    }
-
-    /**
-     * Is root.
-     *
-     * @return  bool
-     */
-    public function isRoot(): bool{
-        return $this->parent === $this;
+        $this->parent   = $parent;
     }
 
     /**
@@ -65,7 +50,7 @@ class Node{
      *
      * @return  Node
      */
-    public function getParent(): Node{
+    public function getParent(): ?Node{
         return $this->parent;
     }
 
@@ -79,7 +64,7 @@ class Node{
     }
 
     /**
-     * Get child.
+     * Get child node.
      *
      * @param   string  $segment
      *
@@ -90,7 +75,7 @@ class Node{
     }
 
     /**
-     * Add child.
+     * Add child node.
      *
      * @param   string  $segment
      *
@@ -105,7 +90,7 @@ class Node{
     }
 
     /**
-     * Remove child.
+     * Remove child node.
      *
      * @param   string  $segment
      *
@@ -126,46 +111,5 @@ class Node{
      */
     public function getSegment(): Segment{
         return $this->segment;
-    }
-
-    /**
-     * Get routes.
-     *
-     * @return  Route[]
-     */
-    public function getRoutes(): iterable{
-        yield from $this->routes;
-    }
-
-    /**
-     * Add route.
-     *
-     * @param   Route   $route
-     *
-     * @return  $this
-     */
-    public function addRoute(Route $route): self{
-        if(array_key_exists($route->getName(), $this->routes)){
-            return $this;
-        }
-
-        $this->routes[$route->getName()]    = $route;
-
-        return $this;
-    }
-
-    /**
-     * Remove route.
-     *
-     * @param   Route   $route
-     *
-     * @return  $this
-     */
-    public function removeRoute(Route $route): self{
-        if(array_key_exists($route->getName(), $this->routes)){
-            unset($this->routes[$route->getName()]);
-        }
-
-        return $this;
     }
 }
