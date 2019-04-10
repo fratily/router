@@ -84,7 +84,9 @@ abstract class AbstractNode implements NodeInterface{
      */
     public function addChild(string $segment): NodeInterface{
         if(!isset($this->children[$segment])){
-            $this->children[$segment]   = $this->manager->generate($segment, false);
+            $this->children[$segment]   = $this->getManager()
+                ->generate($segment, false)
+            ;
         }
 
         return $this;
