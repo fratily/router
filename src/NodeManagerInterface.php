@@ -24,12 +24,12 @@ interface NodeManagerInterface{
     /**
      * Generate node from segment string.
      *
-     * @param string $segment
-     * @param bool   $isRoot
+     * @param string             $segment
+     * @param NodeInterface|null $parent
      *
      * @return NodeInterface
      *
      * @throws InvalidSegmentException
      */
-    public function generate(string $segment, bool $isRoot = false): NodeInterface;
+    public function generate(string $segment, ?NodeInterface $parent): NodeInterface;
 }

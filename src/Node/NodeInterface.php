@@ -24,10 +24,13 @@ interface NodeInterface{
     /**
      * Constructor.
      *
+     * If parent is null, set parent $this.
+     *
      * @param NodeManagerInterface $manager
      * @param NodeInterface        $parent
+     * @param string|null          $name
      */
-    public function __construct(NodeManagerInterface $manager, NodeInterface $parent);
+    public function __construct(NodeManagerInterface $manager, ?NodeInterface $parent, ?string $name);
 
     /**
      * Get parent node.
@@ -74,6 +77,13 @@ interface NodeInterface{
      * @return $this
      */
     public function removeChild(string $segment): NodeInterface;
+
+    /**
+     * Get name.
+     *
+     * @return string
+     */
+    public function getName(): string;
 
     /**
      * Get route instance.

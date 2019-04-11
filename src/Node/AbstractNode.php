@@ -37,6 +37,11 @@ abstract class AbstractNode implements NodeInterface{
     private $children   = [];
 
     /**
+     * @var string|null
+     */
+    private $name;
+
+    /**
      * @var Route|null
      */
     private $route;
@@ -44,9 +49,10 @@ abstract class AbstractNode implements NodeInterface{
     /**
      * {@inheritDoc}
      */
-    public function __construct(NodeManagerInterface $manager, NodeInterface $parent){
+    public function __construct(NodeManagerInterface $manager, ?NodeInterface $parent, ?string $name){
         $this->manager  = $manager;
-        $this->parent   = $parent;
+        $this->parent   = $parent ?? $this;
+        $this->name     = $name;
     }
 
     /**
@@ -85,7 +91,7 @@ abstract class AbstractNode implements NodeInterface{
     public function addChild(string $segment): NodeInterface{
         if(!isset($this->children[$segment])){
             $this->children[$segment]   = $this->getManager()
-                ->generate($segment, false)
+                ->generate($segment, $this)
             ;
         }
 
@@ -101,6 +107,13 @@ abstract class AbstractNode implements NodeInterface{
         }
 
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getName(): string{
+        return $this->name;
     }
 
     /**
