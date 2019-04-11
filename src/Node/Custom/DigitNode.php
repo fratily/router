@@ -11,7 +11,9 @@
  * @license     MIT
  * @since       1.0.0
  */
-namespace Fratily\Router\Node;
+namespace Fratily\Router\Node\Custom;
+
+use Fratily\Router\Node\AbstractNode;
 
 /**
  *
