@@ -34,11 +34,20 @@ class NodeManager implements NodeManagerInterface{
         "int"   => DigitNode::class,
     ];
 
+    /**
+     * Get custom node class name.
+     *
+     * @param string $name
+     *
+     * @return string|null
+     */
     public function getCustomNodeClass(string $name): ?string{
         return $this->customNodes[$name] ?? null;
     }
 
     /**
+     * Add custom node class name.
+     *
      * @param string $name
      * @param string $class
      *
