@@ -14,7 +14,7 @@
 namespace Fratily\Router\Node;
 
 use Fratily\Router\NodeManagerInterface;
-use Fratily\Router\Route;
+use Fratily\Router\RouteInterface;
 
 /**
  *
@@ -58,7 +58,7 @@ interface NodeInterface{
     public function getChild(string $segment): ?NodeInterface;
 
     /**
-     * Add child node from segment string.
+     * Add child node.
      *
      * If already exists same segment node, replace node by $child.
      *
@@ -88,6 +88,15 @@ interface NodeInterface{
     public function removeChild(string $segment): NodeInterface;
 
     /**
+     * Remove child node.
+     *
+     * @param NodeInterface $child
+     *
+     * @return $this
+     */
+    public function removeChildNode(NodeInterface $child): NodeInterface;
+
+    /**
      * Get name.
      *
      * @return string
@@ -97,18 +106,27 @@ interface NodeInterface{
     /**
      * Get route instance.
      *
-     * @return Route|null
+     * @return RouteInterface[]|null
      */
-    public function getRoute(): ?Route;
+    public function getRoutes(): ?array;
 
     /**
-     * Set route instance.
+     * Add route.
      *
-     * @param Route|null $route
+     * @param RouteInterface $route
      *
      * @return void
      */
-    public function setRoute(?Route $route): void;
+    public function addRoute(RouteInterface $route): void;
+
+    /**
+     * Remove route.
+     *
+     * @param RouteInterface $route
+     *
+     * @return void
+     */
+    public function removeRoute(RouteInterface $route): void;
 
     /**
      * Check to request segment is match defined segment.

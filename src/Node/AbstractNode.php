@@ -14,7 +14,7 @@
 namespace Fratily\Router\Node;
 
 use Fratily\Router\NodeManagerInterface;
-use Fratily\Router\Route;
+use Fratily\Router\RouteInterface;
 
 /**
  *
@@ -42,9 +42,9 @@ abstract class AbstractNode implements NodeInterface{
     private $name;
 
     /**
-     * @var Route|null
+     * @var RouteInterface[]
      */
-    private $route;
+    private $routes = [];
 
     /**
      * {@inheritDoc}
@@ -125,6 +125,20 @@ abstract class AbstractNode implements NodeInterface{
     /**
      * {@inheritDoc}
      */
+    public function removeChildNode(NodeInterface $child): NodeInterface{
+        $this->children = array_filter(
+            $this->children,
+            function($v) use ($child){
+                return $child !== $v;
+            }
+        );
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getName(): string{
         return $this->name;
     }
@@ -132,15 +146,24 @@ abstract class AbstractNode implements NodeInterface{
     /**
      * {@inheritDoc}
      */
-    public function getRoute(): ?Route{
-        return $this->route;
+    public function getRoutes(): array{
+        return $this->routes;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function setRoute(?Route $route): void{
-        $this->route    = $route;
+    public function addRoute(RouteInterface $route): void{
+        $this->routes[] = $route;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function removeRoute(RouteInterface $route): void{
+        $this->routes   = array_values(
+            array_diff($this->routes, [$route])
+        );
     }
 
     /**
