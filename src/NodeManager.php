@@ -95,11 +95,15 @@ class NodeManager implements NodeManagerInterface{
         }
 
         if("@" !== $type){
-            throw new InvalidSegmentException();
+            throw new InvalidSegmentException(
+                "Invalid token '{$type}' used in {$segment}."
+            );
         }
 
         if(null === $this->getCustomNodeClass($conf)){
-            throw new InvalidSegmentException();
+            throw new InvalidSegmentException(
+                "Not defined custom node '{$conf}'."
+            );
         }
 
         $class  = $this->getCustomNodeClass($conf);
