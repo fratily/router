@@ -156,9 +156,9 @@ class NodeManager implements NodeManagerInterface{
     /**
      * Generate regex node.
      *
-     * @param string        $regex
-     * @param NodeInterface $parent
-     * @param string|null   $name
+     * @param string             $regex
+     * @param NodeInterface|null $parent
+     * @param string|null        $name
      *
      * @return NodeInterface
      */
@@ -177,9 +177,9 @@ class NodeManager implements NodeManagerInterface{
     /**
      * Generate wildcard node.
      *
-     * @param string        $wildcard
-     * @param NodeInterface $parent
-     * @param string|null   $name
+     * @param string             $wildcard
+     * @param NodeInterface|null $parent
+     * @param string|null        $name
      *
      * @return NodeInterface
      */
