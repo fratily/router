@@ -101,6 +101,15 @@ abstract class AbstractNode implements NodeInterface{
     /**
      * {@inheritDoc}
      */
+    public function addChildNode(string $segment, NodeInterface $child): NodeInterface{
+        $this->children[$segment]   = $child;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function removeChild(string $segment): NodeInterface{
         if(array_key_exists($segment, $this->children)){
             unset($this->children[$segment]);

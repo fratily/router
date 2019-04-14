@@ -58,16 +58,25 @@ interface NodeInterface{
     public function getChild(string $segment): ?NodeInterface;
 
     /**
-     * Add child node.
+     * Add child node from segment string.
      *
      * If already exists same segment node, replace node by $child.
      *
-     * @param string        $segment
-     * @param NodeInterface $child
+     * @param string $segment
      *
      * @return $this
      */
     public function addChild(string $segment): NodeInterface;
+
+    /**
+     * Add child node.
+     *
+     * @param string        $segment
+     * @param NodeInterface $child
+     *
+     * @return NodeInterface
+     */
+    public function addChildNode(string $segment, NodeInterface $child): NodeInterface;
 
     /**
      * Remove child node.
