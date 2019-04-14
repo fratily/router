@@ -66,10 +66,7 @@ class NodeManager implements NodeManagerInterface{
     /**
      * {@inheritDoc}
      */
-    public function generate(
-        string $segment,
-        ?NodeInterface $parent
-    ): NodeInterface{
+    public function generate(string $segment, ?NodeInterface $parent): NodeInterface{
         if("{" !== mb_substr($segment, 0, 1) || "}" !== mb_substr($segment, -1)){
             return $this->generateSame(rawurldecode($segment), $parent);
         }
