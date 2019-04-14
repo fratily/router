@@ -102,6 +102,10 @@ abstract class AbstractNode implements NodeInterface{
      * {@inheritDoc}
      */
     public function addChildNode(string $segment, NodeInterface $child): NodeInterface{
+        if($this !== $child->getParent()){
+            throw new \InvalidArgumentException();
+        }
+
         $this->children[$segment]   = $child;
 
         return $this;
