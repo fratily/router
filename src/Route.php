@@ -65,6 +65,10 @@ class Route implements RouteInterface{
      * {@inheritDoc}
      */
     public function __construct(string $name, string $path){
+        if("/" !== mb_substr($path, 0, 1)){
+            $path   = "/" . $path;
+        }
+
         $this->name = $name;
         $this->path = $path;
     }
@@ -101,6 +105,10 @@ class Route implements RouteInterface{
      * {@inheritDoc}
      */
     public function withPath(string $path): RouteInterface{
+        if("/" !== mb_substr($path, 0, 1)){
+            $path   = "/" . $path;
+        }
+
         if($this->path === $path){
             return $this;
         }
