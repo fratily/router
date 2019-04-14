@@ -13,15 +13,23 @@
  */
 namespace Fratily\Router;
 
+use Fratily\Router\Node\NodeInterface;
+use Fratily\Router\Node\SameNode;
+
 /**
  *
  */
 class RouteCollector{
 
     /**
-     * @var Node
+     * @var NodeManagerInterface
      */
-    private $tree;
+    private $nodeManager;
+
+    /**
+     * @var SameNode
+     */
+    private $rootNode;
 
     /**
      * @var Route[]
@@ -29,22 +37,30 @@ class RouteCollector{
     private $routes = [];
 
     /**
-     * @var \SplObjectStorage|Node[]
+     * @var \SplObjectStorage|NodeInterface[]
      */
     private $leaves;
 
-    public function __construct(){
-        $this->tree     = new Node(new Segment(""), null);
-        $this->leaves   = new \SplObjectStorage();
+    /**
+     * Constructor.
+     *
+     * @param NodeManagerInterface $nodeManager
+     */
+    public function __construct(NodeManagerInterface $nodeManager){
+        $this->nodeManager  = $nodeManager;
+        $this->leaves       = new \SplObjectStorage();
+        $this->rootNode     = new SameNode($nodeManager, null, null);
+
+        $this->rootNode->setSame("");
     }
 
     /**
-     * Get all routes.
+     * Get node manager.
      *
-     * @return  Route[]
+     * @return NodeManagerInterface
      */
-    public function all(): array{
-        $this->routes;
+    protected function getNodeManager(): NodeManagerInterface{
+        return $this->nodeManager;
     }
 
     /**
@@ -67,11 +83,15 @@ class RouteCollector{
      */
     public function add(Route $route): self{
         if(isset($this->leaves[$route])){
-            throw new \InvalidArgumentException();
+            throw new \InvalidArgumentException(
+                "Route is already registered."
+            );
         }
 
         if(array_key_exists($route->getName(), $this->routes)){
-            throw new \InvalidArgumentException();
+            throw new \InvalidArgumentException(
+                "Same name ({$route->getName()}) route is already registered."
+            );
         }
 
         $queue  = new \SplQueue();
@@ -80,9 +100,9 @@ class RouteCollector{
             $queue->enqueue($segment);
         }
 
-        $queue->dequeue(); // 先頭のセグメント(ここ.com/xxx/xxx)はすでにある(ルートノード)
+        $queue->dequeue(); // 先頭のセグメントはすでにある(ルートノード)
 
-        $node   = $this->tree;
+        $node   = $this->rootNode;
 
         while(!$queue->isEmpty()){
             $segment    = $queue->dequeue();
@@ -120,10 +140,10 @@ class RouteCollector{
 
         $node->removeRoute($route);
 
-        while(0 === count($node->getRoutes())){
-            $parent = $node;
+        while(0 === count($node->getRoutes()) && $node !== $node->getParent()){
+            $parent = $node->getParent();
 
-            $parent->removeChild($node->getSegment());
+            $parent->removeChildNode($node);
 
             $node   = $parent;
         }
@@ -131,111 +151,67 @@ class RouteCollector{
         return $this;
     }
 
-    public function match(string $path, ?string $method, ?string $host): ?Route{
-        $stack      = new \SplStack();
-        $segments   = explode(
-            "/",
-            "/" === mb_substr($path, 0, 1) ? mb_substr($path, 1) : $path
-        );
+    /**
+     * Router.
+     *
+     * @param string      $path
+     * @param string|null $method
+     * @param string|null $host
+     *
+     * @return RouteInterface|null
+     */
+    public function match(string $path, ?string $method, ?string $host): ?RouteInterface{
+        if("/" !== mb_substr($path, 0, 1)){
+            $path   = "/" . $path;
+        }
 
-        foreach(array_reverse($segments) as $segment){
+        $stack      = new \SplStack();
+
+        foreach(array_reverse(explode("/", $path)) as $segment){
             $stack->push($segment);
         }
 
-        return $this->recursionMatch($this->tree, $stack, $method, $host);
+        return $this->recursionMatch($this->rootNode, $stack, $method, $host);
     }
 
-    private function recursionMatch(Node $node, \SplStack $stack, ?string $method, ?string $host): ?Route{
+    private function recursionMatch(
+        NodeInterface $node,
+        \SplStack $stack,
+        ?string $method,
+        ?string $host
+    ): ?RouteInterface{
         $segment    = $stack->pop();
-        $param      = $segment;
         $route      = null;
 
-        if($stack->isEmpty() && 0 === count($node->getRoutes())){
-            $stack->push($segment);
-
-            return null;
-        }
-
-        if(!$this->segmentIsMatch($param, $node->getSegment())){
-            $stack->push($segment);
-
-            return null;
-        }
-
-        if($stack->isEmpty()){
-            foreach($node->getRoutes() as $_route){
-                if(
-                    (null === $host || fnmatch($_route->getHost(), $host))
-                    && (null === $method || in_array($method, $_route->getMethods()))
-                ){
-                    if(null === $route || $route->getNumber() > $_route->getNumber()){
+        if($node->isMatch($segment)){
+            if($stack->isEmpty()){
+                foreach($node->getRoutes() as $_route){
+                    if(
+                        (null === $host || fnmatch($_route->getHost(), $host))
+                        && (null === $method || in_array($method, $_route->getMethods()))
+                    ){
                         $route  = $_route;
+
+                        break;
+                    }
+                }
+            }else{
+                foreach($node->getChildren() as $child){
+                    $route  = $this->recursionMatch($child, $stack, $method, $host);
+
+                    if(null !== $route){
+                        break;
                     }
                 }
             }
-        }else{
-            foreach($node->getChildren() as $child){
-                $route  = $this->recursionMatch($child, $stack, $method, $host);
-
-                if(null !== $route){
-                    break;
-                }
-            }
-        }
-
-        if(null !== $route && null !== $node->getSegment()->getName()){
-            $route  = $route->withParameter($node->getSegment()->getName(), $param);
         }
 
         $stack->push($segment);
 
+        if(null !== $route && null !== $node->getName()){
+            $route->withParameter($node->getName(), $segment);
+        }
+
         return $route;
     }
-
-    /**
-     * Segment text is matched Segment.
-     *
-     * @param   string  $segmentText
-     * @param   Segment $segment
-     *
-     * @return  bool
-     */
-    private function segmentIsMatch(string &$segmentText, Segment $segment): bool{
-        $segmentText    = rawurldecode($segmentText);
-
-        if(null !== $segment->getSame() && $segment->getSame() === $segmentText){
-            return true;
-        }
-
-        if(
-            null !== $segment->getRegex()
-            && 1 === preg_match("/\A{$segment->getRegex()}\z/", $segmentText, $m)
-        ){
-            if(null !== $segment->getName() && isset($m[$segment->getName()])){
-                $segmentText    = $m[$segment->getName()];
-            }
-
-            return true;
-        }
-
-        // TODO: この部分の実装が汚いので、今後修正する。
-        if("num" === $segment->getFilter()){
-            $options    = [
-                "options"   => [
-                    "min_range" => 0,
-                ],
-            ];
-
-            $val    = filter_var($segmentText, FILTER_VALIDATE_INT, $options);
-
-            if(false !== $val){
-                $segmentText    = $val;
-
-                return true;
-            }
-        }
-
-        return false;
-    }
-
 }
