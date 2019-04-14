@@ -157,6 +157,19 @@ class Route implements RouteInterface{
      * {@inheritDoc}
      */
     public function withMethods(string ...$methods): RouteInterface{
+        $methods    = array_filter(
+            array_unique($methods),
+            function($v){
+                return in_array($v, Route::ALLOW_METHODS);
+            }
+        );
+
+        if(empty($methods)){
+            throw new \InvalidArgumentException(
+                ""
+            );
+        }
+
         $clone          = clone $this;
         $clone->methods = $methods;
 
