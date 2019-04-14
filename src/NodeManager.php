@@ -164,7 +164,7 @@ class NodeManager implements NodeManagerInterface{
      */
     protected function generateRegex(
         string $regex,
-        NodeInterface $parent,
+        ?NodeInterface $parent,
         ?string $name
     ): NodeInterface{
         $node   = new RegexNode($this, $parent, $name);
@@ -185,7 +185,7 @@ class NodeManager implements NodeManagerInterface{
      */
     protected function generateWildcard(
         string $wildcard,
-        NodeInterface $parent,
+        ?NodeInterface $parent,
         ?string $name
     ): NodeInterface{
         $node   = new WildcardNode($this, $parent, $name);
