@@ -49,4 +49,11 @@ class SameNode extends AbstractNode{
     public function isMatch(string $requestSegment): bool{
         return $this->same === $requestSegment;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getSegment($parameter): string{
+        return $this->getSame();
+    }
 }

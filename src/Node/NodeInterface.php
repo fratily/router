@@ -120,4 +120,15 @@ interface NodeInterface{
      * @return bool
      */
     public function isMatch(string $requestSegment): bool;
+
+    /**
+     * Get segment string.
+     *
+     * When reverse routing.
+     *
+     * @param mixed $parameter
+     *
+     * @return string
+     */
+    public function getSegment($parameter): string;
 }

@@ -142,4 +142,18 @@ abstract class AbstractNode implements NodeInterface{
     public function setRoute(?Route $route): void{
         $this->route    = $route;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getSegment($parameter): string{
+        if(
+            is_scalar($parameter)
+            || (is_object($parameter) && method_exists($parameter, "__toString"))
+        ){
+            return (string)$parameter;
+        }
+
+        return ":unresolved:";
+    }
 }
