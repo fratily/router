@@ -130,6 +130,12 @@ class Route implements RouteInterface{
      * {@inheritDoc}
      */
     public function withHost(string $host): RouteInterface{
+        if(false !== mb_strpos($host, "/")){
+            throw new \InvalidArgumentException(
+                "'/' is invalid token."
+            );
+        }
+
         if($this->host === $host){
             return $this;
         }
