@@ -13,23 +13,10 @@
  */
 namespace Fratily\Router;
 
-use Fratily\Router\Node\NodeInterface;
-use Fratily\Router\Node\SameNode;
-
 /**
  *
  */
 class RouteCollector{
-
-    /**
-     * @var NodeManagerInterface
-     */
-    private $nodeManager;
-
-    /**
-     * @var SameNode
-     */
-    private $rootNode;
 
     /**
      * @var Route[]
@@ -37,181 +24,209 @@ class RouteCollector{
     private $routes = [];
 
     /**
-     * @var \SplObjectStorage|NodeInterface[]
+     * @var bool
      */
-    private $leaves;
+    private $isLocked   = false;
 
     /**
-     * Constructor.
+     * Lock the route collector.
      *
-     * @param NodeManagerInterface $nodeManager
+     * @return void
      */
-    public function __construct(NodeManagerInterface $nodeManager){
-        $this->nodeManager  = $nodeManager;
-        $this->leaves       = new \SplObjectStorage();
-        $this->rootNode     = new SameNode($nodeManager, null, null);
-
-        $this->rootNode->setSame("");
+    public function lock(){
+        $this->isLocked = true;
     }
 
     /**
-     * Get node manager.
+     * Returns the routes.
      *
-     * @return NodeManagerInterface
+     * @return Route[]
      */
-    protected function getNodeManager(): NodeManagerInterface{
-        return $this->nodeManager;
+    public function getRoutes(): array{
+        return array_values($this->routes);
     }
 
     /**
-     * Get route.
+     * Returns a route by name.
      *
-     * @param   string  $name
+     * @param string $name The route name
      *
-     * @return  Route|null
+     * @return Route
      */
-    public function get(string $name): ?Route{
-        return $this->routes[$name] ?? null;
+    public function getRoute(string $name): Route{
+        if(!isset($this->routes[$name])){
+            throw new \LogicException();
+        }
+
+        return $this->routes[$name];
+    }
+
+    /**
+     * Returns true if route is registered.
+     *
+     * @param string $name The route name
+     *
+     * @return bool
+     */
+    public function hasRoute(string $name): bool{
+        return isset($this->routes[$name]);
     }
 
     /**
      * Add route.
      *
-     * @param   Route   $route
+     * @param Route $route The route instance
      *
-     * @return  $this
+     * @return $this
      */
-    public function add(Route $route): self{
-        if(isset($this->leaves[$route])){
-            throw new \InvalidArgumentException(
-                "Route is already registered."
-            );
+    public function addRoute(Route $route): self{
+        if($this->isLocked){
+            throw new \LogicException();
         }
 
-        if(array_key_exists($route->getName(), $this->routes)){
-            throw new \InvalidArgumentException(
-                "Same name ({$route->getName()}) route is already registered."
-            );
+        if($this->hasRoute($route->getName())){
+            throw new \LogicException();
         }
-
-        $queue  = new \SplQueue();
-
-        foreach(explode("/", $route->getPath()) as $segment){
-            $queue->enqueue($segment);
-        }
-
-        $queue->dequeue(); // 先頭のセグメントはすでにある(ルートノード)
-
-        $node   = $this->rootNode;
-
-        while(!$queue->isEmpty()){
-            $segment    = $queue->dequeue();
-
-            $node->addChild($segment);
-
-            $node   = $node->getChild($segment);
-        }
-
-        $node->addRoute($route);
 
         $this->routes[$route->getName()]    = $route;
-        $this->leaves[$route]               = $node;
 
         return $this;
+    }
+
+    /**
+     * Add route instance generated from parameter.
+     *
+     * @param string      $method  The method
+     * @param string      $name    The name
+     * @param string      $path    The path
+     * @param string|null $host    The host name
+     * @param null        $payload The payload
+     *
+     * @return $this
+     */
+    public function addRouteFromParameter(
+        string $method,
+        string $name,
+        string $path,
+        string $host = null,
+        $payload = null
+    ): self{
+        return $this->addRoute(
+            (new Route($name, $path, [$method], $host))->withPayload($payload)
+        );
     }
 
     /**
      * Remove route.
      *
-     * @param   string  $name
+     * @param string $name The route name
      *
-     * @return  $this
+     * @return $this
      */
-    public function remove(string $name): self{
-        if(!array_key_exists($name, $this->routes)){
-            return $this;
+    public function removeRoute(string $name): self{
+        if($this->isLocked){
+            throw new \LogicException();
         }
 
-        $route  = $this->routes[$name];
-        $node   = $this->leaves[$route];
-
-        unset($this->routes[$name]);
-        unset($this->leaves[$route]);
-
-        $node->removeRoute($route);
-
-        while(0 === count($node->getRoutes()) && $node !== $node->getParent()){
-            $parent = $node->getParent();
-
-            $parent->removeChildNode($node);
-
-            $node   = $parent;
+        if(array_key_exists($name, $this->routes)){
+            unset($this->routes[$name]);
         }
 
         return $this;
     }
 
     /**
-     * Router.
+     * Add GET method route.
      *
-     * @param string      $path
-     * @param string|null $method
-     * @param string|null $host
+     * @param string      $name    The name
+     * @param string      $path    The path
+     * @param string|null $host    The host name
+     * @param null        $payload The payload
      *
-     * @return RouteInterface|null
+     * @return $this
      */
-    public function match(string $path, ?string $method, ?string $host): ?RouteInterface{
-        if("/" !== mb_substr($path, 0, 1)){
-            $path   = "/" . $path;
-        }
-
-        $stack      = new \SplStack();
-
-        foreach(array_reverse(explode("/", $path)) as $segment){
-            $stack->push($segment);
-        }
-
-        return $this->recursionMatch($this->rootNode, $stack, $method, $host);
+    public function get(
+        string $name,
+        string $path,
+        string $host = null,
+        $payload = null
+    ): self{
+        return $this->addRouteFromParameter(Route::GET, $name, $path, $host, $payload);
     }
 
-    private function recursionMatch(
-        NodeInterface $node,
-        \SplStack $stack,
-        ?string $method,
-        ?string $host
-    ): ?RouteInterface{
-        $segment    = $stack->pop();
-        $route      = null;
+    /**
+     * Add POST method route.
+     *
+     * @param string      $name    The name
+     * @param string      $path    The path
+     * @param string|null $host    The host name
+     * @param null        $payload The payload
+     *
+     * @return $this
+     */
+    public function post(
+        string $name,
+        string $path,
+        string $host = null,
+        $payload = null
+    ): self{
+        return $this->addRouteFromParameter(Route::POST, $name, $path, $host, $payload);
+    }
 
-        if($node->isMatch($segment)){
-            if($stack->isEmpty()){
-                foreach($node->getRoutes() as $_route){
-                    if(
-                        (null === $host || fnmatch($_route->getHost(), $host))
-                        && (null === $method || in_array($method, $_route->getMethods()))
-                    ){
-                        $route  = $_route;
+    /**
+     * Add PUT method route.
+     *
+     * @param string      $name    The name
+     * @param string      $path    The path
+     * @param string|null $host    The host name
+     * @param null        $payload The payload
+     *
+     * @return $this
+     */
+    public function put(
+        string $name,
+        string $path,
+        string $host = null,
+        $payload = null
+    ): self{
+        return $this->addRouteFromParameter(Route::PUT, $name, $path, $host, $payload);
+    }
 
-                        break;
-                    }
-                }
-            }else{
-                foreach($node->getChildren() as $child){
-                    $route  = $this->recursionMatch($child, $stack, $method, $host);
+    /**
+     * Add PATCH method route.
+     *
+     * @param string      $name    The name
+     * @param string      $path    The path
+     * @param string|null $host    The host name
+     * @param null        $payload The payload
+     *
+     * @return $this
+     */
+    public function patch(
+        string $name,
+        string $path,
+        string $host = null,
+        $payload = null
+    ): self{
+        return $this->addRouteFromParameter(Route::PATCH, $name, $path, $host, $payload);
+    }
 
-                    if(null !== $route){
-                        break;
-                    }
-                }
-            }
-        }
-
-        $stack->push($segment);
-
-        if(null !== $route && null !== $node->getName()){
-            $route->withParameter($node->getName(), $segment);
-        }
-
-        return $route;
+    /**
+     * Add DELETE method route.
+     *
+     * @param string      $name    The name
+     * @param string      $path    The path
+     * @param string|null $host    The host name
+     * @param null        $payload The payload
+     *
+     * @return $this
+     */
+    public function delete(
+        string $name,
+        string $path,
+        string $host = null,
+        $payload = null
+    ): self{
+        return $this->addRouteFromParameter(Route::DELETE, $name, $path, $host, $payload);
     }
 }
