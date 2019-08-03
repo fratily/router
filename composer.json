@@ -26,8 +26,5 @@
         "psr-4": {
             "Fratily\\Tests\\Router\\": "tests/"
         }
-    },
-    "scripts": {
-        "phpunit": "phpunit"
     }
 }
