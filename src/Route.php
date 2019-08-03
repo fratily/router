@@ -16,20 +16,13 @@ namespace Fratily\Router;
 /**
  *
  */
-class Route implements RouteInterface{
+class Route{
 
-    public const DEFAULT_HOST       = "*";
-
-    public const DEFAULT_METHODS    = ["GET"];
-
-    public const ALLOW_METHODS      = [
-        "GET",
-        "HEAD",
-        "POST",
-        "PUT",
-        "PATCH",
-        "DELETE",
-    ];
+    public const GET    = "GET";
+    public const POST   = "POST";
+    public const PUT    = "PUT";
+    public const PATCH  = "PATCH";
+    public const DELETE = "DELETE";
 
     /**
      * @var string
@@ -42,198 +35,242 @@ class Route implements RouteInterface{
     private $path;
 
     /**
-     * @var string|null
+     * @var string
      */
     private $host;
 
     /**
-     * @var string[]|null
+     * @var string[]
      */
     private $methods;
 
     /**
-     * @var mixed[]
+     * @var mixed|null
      */
-    private $payload    = [];
+    private $payload;
 
     /**
-     * @var mixed[]
+     * Constructor.
+     *
+     * @param string   $name    The name
+     * @param string   $path    The path
+     * @param string[] $methods The http methods
+     * @param string   $host    The host name
      */
-    private $parameters = [];
-
-    /**
-     * {@inheritDoc}
-     */
-    public function __construct(string $name, string $path){
-        if("/" !== mb_substr($path, 0, 1)){
-            $path   = "/" . $path;
-        }
-
-        $this->name = $name;
-        $this->path = $path;
+    public function __construct(
+        string $name,
+        string $path,
+        array $methods = [self::GET],
+        string $host = "*"
+    ){
+        $this
+            ->setName($name)
+            ->setPath($path)
+            ->setMethods($methods)
+            ->setHost($host)
+        ;
     }
 
     /**
-     * {@inheritDoc}
+     * Returns the name.
+     *
+     * @return string
      */
     public function getName(): string{
         return $this->name;
     }
 
     /**
-     * {@inheritDoc}
+     * Set the name.
+     *
+     * @param string $name The name
+     *
+     * @return $this
      */
-    public function withName(string $name): RouteInterface{
+    protected function setName(string $name): self{
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Return an instance with the specified name.
+     *
+     * @param string $name The name
+     *
+     * @return $this
+     */
+    public function withName(string $name): self{
         if($this->name === $name){
             return $this;
         }
 
-        $clone          = clone $this;
-        $clone->name    = $name;
-
-        return $clone;
+        return (clone $this)->setName($name);
     }
 
     /**
-     * {@inheritDoc}
+     * Returns the path.
+     *
+     * @return string
      */
     public function getPath(): string{
         return $this->path;
     }
 
     /**
-     * {@inheritDoc}
+     * Set the path.
+     *
+     * @param string $path The path. Path must be percent encoded
+     *
+     * @return $this
      */
-    public function withPath(string $path): RouteInterface{
-        if("/" !== mb_substr($path, 0, 1)){
-            $path   = "/" . $path;
-        }
+    protected function setPath(string $path): self{
+        $this->path = "/" !== mb_substr($path, 0, 1) ? "/{$path}" : $path;
 
+        return $this;
+    }
+
+    /**
+     * Return an instance with the specified path.
+     *
+     * @param string $path The path. Path must be percent encoded
+     *
+     * @return $this
+     */
+    public function withPath(string $path): self{
         if($this->path === $path){
             return $this;
         }
 
-        $clone          = clone $this;
-        $clone->path    = $path;
-
-        return $clone;
+        return (clone $this)->setPath($path);
     }
 
     /**
-     * {@inheritDoc}
+     * Returns the methods.
+     *
+     * @return string[]
+     */
+    public function getMethods(): array{
+        return $this->methods;
+    }
+
+    /**
+     * Set the methods.
+     *
+     * @param string[] $methods The methods.
+     *
+     * @return $this
+     */
+    protected function setMethods(array $methods): self{
+        foreach($methods as $index => $method){
+            if(!is_string($method)){
+                throw new \InvalidArgumentException();
+            }
+        }
+
+        $methods = array_values(array_unique($methods));
+
+        $this->methods  = $methods;
+
+        return $this;
+    }
+
+    /**
+     * Return an instance with the specified methods.
+     *
+     * @param string[] $methods The methods
+     *
+     * @return $this
+     */
+    public function withMethods(array $methods): self{
+        if($this->methods === $methods){
+            return $this;
+        }
+
+        return (clone $this)->setMethods($methods);
+    }
+
+    /**
+     * Returns the host name.
+     *
+     * @return string
      */
     public function getHost(): string{
-        return $this->host ?? static::DEFAULT_HOST;
+        return $this->host;
     }
 
     /**
-     * {@inheritDoc}
+     * Set the host name.
+     *
+     * @param string $host The host name.
+     *
+     * @return $this
      */
-    public function withHost(string $host): RouteInterface{
+    protected function setHost(string $host): self{
+        if("" === $host){
+            throw new \InvalidArgumentException();
+        }
+
         if(false !== mb_strpos($host, "/")){
             throw new \InvalidArgumentException(
                 "'/' is invalid token."
             );
         }
 
-        if($this->host === $host){
-            return $this;
-        }
-
-        $clone          = clone $this;
-        $clone->host    = $host;
+        $this->host = $host;
 
         return $this;
     }
 
     /**
-     * {@inheritDoc}
+     * Return an instance with the specified host name.
+     *
+     * @param string $host The host name. Host name must be specified as a wildcard
+     *
+     * @return $this
      */
-    public function getMethods(): array{
-        return $this->methods ?? static::DEFAULT_METHODS;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function withMethods(string ...$methods): RouteInterface{
-        $methods    = array_filter(
-            array_unique($methods),
-            function($v){
-                return in_array($v, Route::ALLOW_METHODS);
-            }
-        );
-
-        if(empty($methods)){
-            throw new \InvalidArgumentException(
-                ""
-            );
+    public function withHost(string $host): self{
+        if($this->host === $host){
+            return $this;
         }
 
-        $clone          = clone $this;
-        $clone->methods = $methods;
-
-        return $clone;
+        return (clone $this)->setHost($host);
     }
 
     /**
-     * {@inheritDoc}
+     * Returns the payload.
+     *
+     * @return mixed|null
      */
-    public function getPayload(): array{
+    public function getPayload(){
         return $this->payload;
     }
 
     /**
-     * {@inheritDoc}
+     * Set the payload.
+     *
+     * @param mixed|null $payload The payload.
+     *
+     * @return $this
      */
-    public function withPayload(array $payload): RouteInterface{
-        $clone          = clone $this;
-        $clone->payload = $payload;
+    protected function setPayload($payload): self{
+        $this->payload  = $payload;
 
-        return $clone;
+        return $this;
     }
 
     /**
-     * {@inheritDoc}
+     * Return an instance with the specified payload.
+     *
+     * @param mixed|null $payload The payload
+     *
+     * @return $this
      */
-    public function getParameters(): array{
-        return $this->parameters;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getParameter(string $key, $default = null){
-        return $this->parameters[$key] ?? $default;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function withParameters(array $parameters): RouteInterface{
-        $clone              = clone $this;
-        $clone->parameters  = $parameters;
-
-        return $clone;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function withParameter(string $key, $value): RouteInterface{
-        if(
-            array_key_exists($key, $this->parameters)
-            && $this->parameters[$key] === $value
-        ){
+    public function withPayload($payload): self{
+        if($this->payload === $payload){
             return $this;
         }
 
-        $clone              = clone $this;
-        $parameters         = $this->parameters;
-        $parameters[$key]   = $value;
-        $clone->parameters  = $parameters;
-
-        return $clone;
+        return (clone $this)->setPayload($payload);
     }
-
 }
