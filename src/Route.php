@@ -60,14 +60,14 @@ class Route{
     public function __construct(
         string $name,
         string $path,
-        array $methods = [self::GET],
-        string $host = "*"
+        array $methods = null,
+        string $host = null
     ){
         $this
             ->setName($name)
             ->setPath($path)
-            ->setMethods($methods)
-            ->setHost($host)
+            ->setMethods($methods ?? [self::GET])
+            ->setHost($host ?? "*")
         ;
     }
 
