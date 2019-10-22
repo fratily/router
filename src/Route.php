@@ -6,18 +6,18 @@
  * For full copyright and license information, please see the LICENSE.
  * Redistributions of files must retain the above copyright notice.
  *
- * @author      Kento Oka <kento-oka@kentoka.com>
- * @copyright   (c) Kento Oka
- * @license     MIT
- * @since       1.0.0
+ * @author     Kento Oka <kento-oka@kentoka.com>
+ * @copyright (c) Kento Oka
+ * @license   MIT
+ * @since     1.0.0
  */
 namespace Fratily\Router;
 
 /**
  *
  */
-class Route{
-
+class Route
+{
     public const GET    = "GET";
     public const POST   = "POST";
     public const PUT    = "PUT";
@@ -35,11 +35,6 @@ class Route{
     private $path;
 
     /**
-     * @var string
-     */
-    private $host;
-
-    /**
      * @var string[]
      */
     private $methods;
@@ -52,22 +47,19 @@ class Route{
     /**
      * Constructor.
      *
-     * @param string   $name    The name
-     * @param string   $path    The path
+     * @param string $name The name
+     * @param string $path The path
      * @param string[] $methods The http methods
-     * @param string   $host    The host name
      */
     public function __construct(
         string $name,
         string $path,
-        array $methods = null,
-        string $host = null
-    ){
+        array $methods = null
+    ) {
         $this
             ->setName($name)
             ->setPath($path)
             ->setMethods($methods ?? [self::GET])
-            ->setHost($host ?? "*")
         ;
     }
 
@@ -76,7 +68,8 @@ class Route{
      *
      * @return string
      */
-    public function getName(): string{
+    public function getName(): string
+    {
         return $this->name;
     }
 
@@ -87,7 +80,8 @@ class Route{
      *
      * @return $this
      */
-    protected function setName(string $name): self{
+    protected function setName(string $name): Route
+    {
         $this->name = $name;
 
         return $this;
@@ -100,8 +94,9 @@ class Route{
      *
      * @return $this
      */
-    public function withName(string $name): self{
-        if($this->name === $name){
+    public function withName(string $name): Route
+    {
+        if ($this->name === $name) {
             return $this;
         }
 
@@ -113,7 +108,8 @@ class Route{
      *
      * @return string
      */
-    public function getPath(): string{
+    public function getPath(): string
+    {
         return $this->path;
     }
 
@@ -124,7 +120,8 @@ class Route{
      *
      * @return $this
      */
-    protected function setPath(string $path): self{
+    protected function setPath(string $path): Route
+    {
         $this->path = "/" !== mb_substr($path, 0, 1) ? "/{$path}" : $path;
 
         return $this;
@@ -137,8 +134,9 @@ class Route{
      *
      * @return $this
      */
-    public function withPath(string $path): self{
-        if($this->path === $path){
+    public function withPath(string $path): Route
+    {
+        if ($this->path === $path) {
             return $this;
         }
 
@@ -150,7 +148,8 @@ class Route{
      *
      * @return string[]
      */
-    public function getMethods(): array{
+    public function getMethods(): array
+    {
         return $this->methods;
     }
 
@@ -161,9 +160,10 @@ class Route{
      *
      * @return $this
      */
-    protected function setMethods(array $methods): self{
-        foreach($methods as $index => $method){
-            if(!is_string($method)){
+    protected function setMethods(array $methods): Route
+    {
+        foreach ($methods as $index => $method) {
+            if (!is_string($method)) {
                 throw new \InvalidArgumentException();
             }
         }
@@ -182,8 +182,9 @@ class Route{
      *
      * @return $this
      */
-    public function withMethods(array $methods): self{
-        if($this->methods === $methods){
+    public function withMethods(array $methods): Route
+    {
+        if ($this->methods === $methods) {
             return $this;
         }
 
@@ -191,58 +192,12 @@ class Route{
     }
 
     /**
-     * Returns the host name.
-     *
-     * @return string
-     */
-    public function getHost(): string{
-        return $this->host;
-    }
-
-    /**
-     * Set the host name.
-     *
-     * @param string $host The host name.
-     *
-     * @return $this
-     */
-    protected function setHost(string $host): self{
-        if("" === $host){
-            throw new \InvalidArgumentException();
-        }
-
-        if(false !== mb_strpos($host, "/")){
-            throw new \InvalidArgumentException(
-                "'/' is invalid token."
-            );
-        }
-
-        $this->host = $host;
-
-        return $this;
-    }
-
-    /**
-     * Return an instance with the specified host name.
-     *
-     * @param string $host The host name. Host name must be specified as a wildcard
-     *
-     * @return $this
-     */
-    public function withHost(string $host): self{
-        if($this->host === $host){
-            return $this;
-        }
-
-        return (clone $this)->setHost($host);
-    }
-
-    /**
      * Returns the payload.
      *
      * @return mixed|null
      */
-    public function getPayload(){
+    public function getPayload()
+    {
         return $this->payload;
     }
 
@@ -253,7 +208,8 @@ class Route{
      *
      * @return $this
      */
-    protected function setPayload($payload): self{
+    protected function setPayload($payload): Route
+    {
         $this->payload  = $payload;
 
         return $this;
@@ -266,8 +222,9 @@ class Route{
      *
      * @return $this
      */
-    public function withPayload($payload): self{
-        if($this->payload === $payload){
+    public function withPayload($payload): Route
+    {
+        if ($this->payload === $payload) {
             return $this;
         }
 

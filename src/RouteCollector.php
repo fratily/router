@@ -6,18 +6,18 @@
  * For full copyright and license information, please see the LICENSE.
  * Redistributions of files must retain the above copyright notice.
  *
- * @author      Kento Oka <kento-oka@kentoka.com>
- * @copyright   (c) Kento Oka
- * @license     MIT
- * @since       1.0.0
+ * @author     Kento Oka <kento-oka@kentoka.com>
+ * @copyright (c) Kento Oka
+ * @license   MIT
+ * @since     1.0.0
  */
 namespace Fratily\Router;
 
 /**
  *
  */
-class RouteCollector{
-
+class RouteCollector
+{
     /**
      * @var Route[]
      */
@@ -26,15 +26,26 @@ class RouteCollector{
     /**
      * @var bool
      */
-    private $isLocked   = false;
+    private $isLocked = false;
 
     /**
      * Lock the route collector.
      *
      * @return void
      */
-    public function lock(){
+    public function lock(): void
+    {
         $this->isLocked = true;
+    }
+
+    /**
+     * Returns whether or not is locked.
+     *
+     * @return bool
+     */
+    public function isLocked(): bool
+    {
+        return $this->isLocked;
     }
 
     /**
@@ -42,7 +53,8 @@ class RouteCollector{
      *
      * @return Route[]
      */
-    public function getRoutes(): array{
+    public function getRoutes(): array
+    {
         return array_values($this->routes);
     }
 
@@ -53,8 +65,9 @@ class RouteCollector{
      *
      * @return Route
      */
-    public function getRoute(string $name): Route{
-        if(!isset($this->routes[$name])){
+    public function getRoute(string $name): Route
+    {
+        if (!isset($this->routes[$name])) {
             throw new \LogicException();
         }
 
@@ -68,7 +81,8 @@ class RouteCollector{
      *
      * @return bool
      */
-    public function hasRoute(string $name): bool{
+    public function hasRoute(string $name): bool
+    {
         return isset($this->routes[$name]);
     }
 
@@ -79,12 +93,13 @@ class RouteCollector{
      *
      * @return $this
      */
-    public function addRoute(Route $route): self{
-        if($this->isLocked){
+    public function addRoute(Route $route): RouteCollector
+    {
+        if ($this->isLocked()) {
             throw new \LogicException();
         }
 
-        if($this->hasRoute($route->getName())){
+        if ($this->hasRoute($route->getName())) {
             throw new \LogicException();
         }
 
@@ -96,10 +111,9 @@ class RouteCollector{
     /**
      * Add route instance generated from parameter.
      *
-     * @param string      $method  The method
-     * @param string      $name    The name
-     * @param string      $path    The path
-     * @param string|null $host    The host name
+     * @param string      $method The method
+     * @param string      $name The name
+     * @param string      $path The path
      * @param null        $payload The payload
      *
      * @return $this
@@ -108,11 +122,14 @@ class RouteCollector{
         string $method,
         string $name,
         string $path,
-        string $host = null,
         $payload = null
-    ): self{
+    ): RouteCollector {
+        if ($this->isLocked()) {
+            throw new \LogicException();
+        }
+
         return $this->addRoute(
-            (new Route($name, $path, [$method], $host))->withPayload($payload)
+            (new Route($name, $path, [$method]))->withPayload($payload)
         );
     }
 
@@ -123,12 +140,13 @@ class RouteCollector{
      *
      * @return $this
      */
-    public function removeRoute(string $name): self{
-        if($this->isLocked){
+    public function removeRoute(string $name): RouteCollector
+    {
+        if ($this->isLocked()) {
             throw new \LogicException();
         }
 
-        if(array_key_exists($name, $this->routes)){
+        if (array_key_exists($name, $this->routes)) {
             unset($this->routes[$name]);
         }
 
@@ -138,9 +156,8 @@ class RouteCollector{
     /**
      * Add GET method route.
      *
-     * @param string      $name    The name
-     * @param string      $path    The path
-     * @param string|null $host    The host name
+     * @param string      $name The name
+     * @param string      $path The path
      * @param null        $payload The payload
      *
      * @return $this
@@ -148,18 +165,20 @@ class RouteCollector{
     public function get(
         string $name,
         string $path,
-        string $host = null,
         $payload = null
-    ): self{
-        return $this->addRouteFromParameter(Route::GET, $name, $path, $host, $payload);
+    ): RouteCollector {
+        if ($this->isLocked()) {
+            throw new \LogicException();
+        }
+
+        return $this->addRouteFromParameter(Route::GET, $name, $path, $payload);
     }
 
     /**
      * Add POST method route.
      *
-     * @param string      $name    The name
-     * @param string      $path    The path
-     * @param string|null $host    The host name
+     * @param string      $name The name
+     * @param string      $path The path
      * @param null        $payload The payload
      *
      * @return $this
@@ -167,18 +186,20 @@ class RouteCollector{
     public function post(
         string $name,
         string $path,
-        string $host = null,
         $payload = null
-    ): self{
-        return $this->addRouteFromParameter(Route::POST, $name, $path, $host, $payload);
+    ): RouteCollector {
+        if ($this->isLocked()) {
+            throw new \LogicException();
+        }
+
+        return $this->addRouteFromParameter(Route::POST, $name, $path, $payload);
     }
 
     /**
      * Add PUT method route.
      *
-     * @param string      $name    The name
-     * @param string      $path    The path
-     * @param string|null $host    The host name
+     * @param string      $name The name
+     * @param string      $path The path
      * @param null        $payload The payload
      *
      * @return $this
@@ -186,18 +207,20 @@ class RouteCollector{
     public function put(
         string $name,
         string $path,
-        string $host = null,
         $payload = null
-    ): self{
-        return $this->addRouteFromParameter(Route::PUT, $name, $path, $host, $payload);
+    ): RouteCollector {
+        if ($this->isLocked()) {
+            throw new \LogicException();
+        }
+
+        return $this->addRouteFromParameter(Route::PUT, $name, $path, $payload);
     }
 
     /**
      * Add PATCH method route.
      *
-     * @param string      $name    The name
-     * @param string      $path    The path
-     * @param string|null $host    The host name
+     * @param string      $name The name
+     * @param string      $path The path
      * @param null        $payload The payload
      *
      * @return $this
@@ -205,18 +228,20 @@ class RouteCollector{
     public function patch(
         string $name,
         string $path,
-        string $host = null,
         $payload = null
-    ): self{
-        return $this->addRouteFromParameter(Route::PATCH, $name, $path, $host, $payload);
+    ): RouteCollector {
+        if ($this->isLocked()) {
+            throw new \LogicException();
+        }
+
+        return $this->addRouteFromParameter(Route::PATCH, $name, $path, $payload);
     }
 
     /**
      * Add DELETE method route.
      *
-     * @param string      $name    The name
-     * @param string      $path    The path
-     * @param string|null $host    The host name
+     * @param string      $name The name
+     * @param string      $path The path
      * @param null        $payload The payload
      *
      * @return $this
@@ -224,9 +249,12 @@ class RouteCollector{
     public function delete(
         string $name,
         string $path,
-        string $host = null,
         $payload = null
-    ): self{
-        return $this->addRouteFromParameter(Route::DELETE, $name, $path, $host, $payload);
+    ): RouteCollector {
+        if ($this->isLocked()) {
+            throw new \LogicException();
+        }
+
+        return $this->addRouteFromParameter(Route::DELETE, $name, $path, $payload);
     }
 }

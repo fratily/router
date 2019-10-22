@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FratilyPHP Router
  *
@@ -16,5 +17,6 @@ namespace Fratily\Router\Exception;
 /**
  *
  */
-class InvalidSegmentException extends \LogicException{
+class InvalidSegmentException extends \LogicException
+{
 }
