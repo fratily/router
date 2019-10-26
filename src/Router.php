@@ -22,8 +22,6 @@ use Psr\SimpleCache\InvalidArgumentException as SimpleCacheInvalidArgumentExcept
  */
 class Router
 {
-    protected const CACHE_KEY = "fratily.router.node";
-
     /**
      * @var RouteCollector
      */
@@ -159,31 +157,64 @@ class Router
         return $root;
     }
 
+    /**
+     * Returns the route collector.
+     *
+     * @return RouteCollector
+     */
     protected function getRouteCollector(): RouteCollector
     {
         return $this->routeCollector;
     }
 
+    /**
+     * Returns the segment manager.
+     *
+     * @return SegmentManager
+     */
     protected function getSegmentManager(): SegmentManager
     {
         return $this->segmentManager;
     }
 
+    /**
+     * Returns the cache manager.
+     *
+     * @return CacheInterface|null
+     */
     protected function getCache(): ?CacheInterface
     {
         return $this->cache;
     }
 
+    /**
+     * Returns the cache key.
+     *
+     * @return string
+     */
     protected function getCacheKey(): string
     {
         return "fratily.router.node";
     }
 
+    /**
+     * Returns the root segment node.
+     *
+     * @return SegmentNode
+     */
     protected function getNode(): SegmentNode
     {
         return $this->node;
     }
 
+    /**
+     * Returns the route that matched the request.
+     *
+     * @param string $method The request http method
+     * @param string $path The request path
+     *
+     * @return MatchedRoute|null
+     */
     public function match(string $method, string $path): ?MatchedRoute
     {
         $segmentStack = new \SplStack();
@@ -204,6 +235,16 @@ class Router
         );
     }
 
+    /**
+     * Recursive search of the tree and return the matched root.
+     *
+     * @param string[]    $segments The segments
+     * @param \SplStack   $segmentStack The segments stack
+     * @param SegmentNode $node The segment node
+     * @param string      $method The request http method
+     *
+     * @return MatchedRoute|null
+     */
     private function recursiveMatch(
         array $segments,
         \SplStack $segmentStack,

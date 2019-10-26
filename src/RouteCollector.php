@@ -75,7 +75,7 @@ class RouteCollector
     }
 
     /**
-     * Returns true if route is registered.
+     * Returns whether there are route.
      *
      * @param string $name The route name
      *

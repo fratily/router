@@ -77,11 +77,25 @@ class SegmentManager
         return $this->segments[$name] ?? null;
     }
 
+    /**
+     * Returns whether there are segment.
+     *
+     * @param string $name The segment name.
+     *
+     * @return bool
+     */
     public function hasSegment(string $name): bool
     {
         return isset($this->segments[$name]);
     }
 
+    /**
+     * Set the segment.
+     *
+     * @param SegmentInterface $segment The segment
+     *
+     * @return $this
+     */
     protected function setSegment(SegmentInterface $segment): SegmentManager
     {
         if ($this->hasSegment($segment->getName())) {
@@ -93,6 +107,13 @@ class SegmentManager
         return $this;
     }
 
+    /**
+     * Remove the segment.
+     *
+     * @param string $name The segment name
+     *
+     * @return $this
+     */
     public function removeSegment(string $name): SegmentManager
     {
         unset($this->segments[$name]);
@@ -104,11 +125,23 @@ class SegmentManager
         return $this;
     }
 
+    /**
+     * Returns the default segment name.
+     *
+     * @return string|null
+     */
     public function getDefaultSegmentName(): ?string
     {
         return $this->default;
     }
 
+    /**
+     * Set the default segment name.
+     *
+     * @param string $name The segment name
+     *
+     * @return $this
+     */
     protected function setDefaultSegmentName(string $name): SegmentManager
     {
         if (!$this->hasSegment($name)) {
