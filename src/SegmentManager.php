@@ -24,7 +24,7 @@ class SegmentManager
     private $segments = [];
 
     /**
-     * @var string
+     * @var string|null
      */
     private $default;
 
@@ -58,13 +58,13 @@ class SegmentManager
      *
      * @param string|null $name
      *
-     * @return SegmentInterface|null
+     * @return SegmentInterface
      */
-    public function getSegment(string $name = null): ?SegmentInterface
+    public function getSegment(string $name = null): SegmentInterface
     {
         if (null === $name) {
             if (null === $this->getDefaultSegmentName()) {
-                return null;
+                throw new \InvalidArgumentException();
             }
 
             if (!isset($this->segments[$this->getDefaultSegmentName()])) {
@@ -74,7 +74,11 @@ class SegmentManager
             return $this->segments[$this->getDefaultSegmentName()];
         }
 
-        return $this->segments[$name] ?? null;
+        if (!$this->hasSegment($name)) {
+            throw new \InvalidArgumentException();
+        }
+
+        return $this->segments[$name];
     }
 
     /**
@@ -90,19 +94,24 @@ class SegmentManager
     }
 
     /**
-     * Set the segment.
+     * Add the segment.
      *
      * @param SegmentInterface $segment The segment
+     * @param bool             $isDefault The segment is default
      *
      * @return $this
      */
-    protected function setSegment(SegmentInterface $segment): SegmentManager
+    public function addSegment(SegmentInterface $segment, bool $isDefault = false): SegmentManager
     {
         if ($this->hasSegment($segment->getName())) {
             throw new \InvalidArgumentException();
         }
 
         $this->segments[$segment->getName()] = $segment;
+
+        if ($isDefault) {
+            $this->setDefaultSegmentName($segment->getName());
+        }
 
         return $this;
     }
@@ -118,7 +127,7 @@ class SegmentManager
     {
         unset($this->segments[$name]);
 
-        if (null !== $this->getDefaultSegmentName()) {
+        if ($this->getDefaultSegmentName() === $name) {
             $this->default = null;
         }
 
@@ -142,36 +151,13 @@ class SegmentManager
      *
      * @return $this
      */
-    protected function setDefaultSegmentName(string $name): SegmentManager
+    public function setDefaultSegmentName(string $name): SegmentManager
     {
         if (!$this->hasSegment($name)) {
             throw new \InvalidArgumentException();
         }
 
         $this->default = $name;
-
-        return $this;
-    }
-
-    /**
-     * Add the segment.
-     *
-     * @param SegmentInterface $segment The segment
-     * @param bool             $isDefault The segment is default
-     *
-     * @return $this
-     */
-    public function addSegment(SegmentInterface $segment, bool $isDefault = false): SegmentManager
-    {
-        if (isset($this->segments[$segment->getName()])) {
-            throw new \InvalidArgumentException();
-        }
-
-        $this->setSegment($segment);
-
-        if ($isDefault) {
-            $this->setDefaultSegmentName($segment->getName());
-        }
 
         return $this;
     }
