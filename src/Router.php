@@ -42,7 +42,15 @@ class Router
      */
     private $cacheTtl;
 
+    /**
+     * @var SegmentNode
+     */
     private $node;
+
+    /**
+     * @var \SplObjectStorage|SegmentNode[]
+     */
+    private $nodesByRoute;
 
     /**
      * Constructor.
@@ -67,19 +75,30 @@ class Router
 
         $this->routeCollector->lock();
 
-        $this->node = $this->generateInitializedNode();
+        [$this->node, $this->nodesByRoute] = $this->generateInitializedNode();
+
+        if (!is_object($this->node) || !$this->node instanceof SegmentNode) {
+            throw new \UnexpectedValueException();
+        }
+
+        if (
+            !is_object($this->nodesByRoute)
+            || !$this->nodesByRoute instanceof \SplObjectStorage
+        ) {
+            throw new \UnexpectedValueException();
+        }
 
         $this->segmentManager->lock();
     }
 
     /**
-     * Returns the route tree.
+     * Returns the list of route tree and nodes by route array.
      *
-     * @return SegmentNode
+     * @return array
      *
      * @throws SimpleCacheInvalidArgumentException
      */
-    protected function generateInitializedNode(): SegmentNode
+    protected function generateInitializedNode(): array
     {
         if (
             null !== $this->getCache()
@@ -89,6 +108,7 @@ class Router
         }
 
         $root = new SegmentNode(null);
+        $nodesByRoute = new \SplObjectStorage();
         $sameSegmentNames = [];
 
         foreach ($this->getRouteCollector()->getRoutes() as $route) {
@@ -152,9 +172,11 @@ class Router
             }
 
             $node->addRoute($route, $parameterNameMap);
+
+            $nodesByRoute[$route] = $node;
         }
 
-        return $root;
+        return [$root, $nodesByRoute];
     }
 
     /**
@@ -205,6 +227,18 @@ class Router
     protected function getNode(): SegmentNode
     {
         return $this->node;
+    }
+
+    /**
+     * Returns the leaf node by route.
+     *
+     * @param Route $route
+     *
+     * @return SegmentNode|null
+     */
+    protected function getLeafNodeByRoute(Route $route): ?SegmentNode
+    {
+        return $this->nodesByRoute[$route] ?? null;
     }
 
     /**
