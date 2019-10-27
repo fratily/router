@@ -138,6 +138,7 @@ class Router
             );
 
             foreach ($segments as $segment) {
+                $defaultValue = "";
                 $firstChar = substr($segment, 0, 1);
                 $parameterName = null;
                 $segmentName = null;
@@ -179,11 +180,12 @@ class Router
                         $sameSegmentNames[$segment] = $segmentName;
                     }
 
+                    $defaultValue = $segment;
                     $segmentName = $sameSegmentNames[$segment];
                 }
 
                 $parameterNameMap[$index++] = $parameterName;
-                $node = $node->addChild($segmentName);
+                $node = $node->addChild($segmentName, $defaultValue);
             }
 
             $node->addRoute($route, $parameterNameMap);

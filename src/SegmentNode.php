@@ -24,6 +24,11 @@ class SegmentNode
     private $parent;
 
     /**
+     * @var string
+     */
+    private $defaultValue;
+
+    /**
      * @var SegmentNode[]
      */
     private $children = [];
@@ -42,10 +47,12 @@ class SegmentNode
      * Constructor.
      *
      * @param SegmentNode|null $parent The parent node
+     * @param string           $defaultValue The default segment value
      */
-    public function __construct(?SegmentNode $parent)
+    public function __construct(?SegmentNode $parent, string $defaultValue = "")
     {
         $this->parent = $parent;
+        $this->defaultValue = $defaultValue;
     }
 
     /**
@@ -56,6 +63,16 @@ class SegmentNode
     public function getParent(): ?SegmentNode
     {
         return $this->parent;
+    }
+
+    /**
+     * Returns the default segment value.
+     *
+     * @return string
+     */
+    public function getDefaultValue(): string
+    {
+        return $this->defaultValue;
     }
 
     /**
@@ -100,13 +117,14 @@ class SegmentNode
      * Add the child node by segment name.
      *
      * @param string $segment The segment node
+     * @param string $defaultValue The default segment value
      *
      * @return SegmentNode
      */
-    public function addChild(string $segment): SegmentNode
+    public function addChild(string $segment, string $defaultValue = ""): SegmentNode
     {
         if (!$this->hasChild($segment)) {
-            $this->children[$segment] = new SegmentNode($this);
+            $this->children[$segment] = new SegmentNode($this, $defaultValue);
         }
 
         return $this->children[$segment];
