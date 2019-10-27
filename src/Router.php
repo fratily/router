@@ -377,4 +377,77 @@ class Router
 
         return null;
     }
+
+    /**
+     * Returns the path string by route name.
+     *
+     * @param string $name The route name.
+     * @param array  $params The route parameters.
+     * @param bool   $addQuery If TRUE, unused parameters will be added as a query.
+     *
+     * @return string
+     */
+    public function reverseRoute(
+        string $name,
+        array $params = [],
+        $addQuery = false
+    ): string {
+        if (!$this->getRouteCollector()->hasRoute($name)) {
+            throw new \InvalidArgumentException();
+        }
+
+        $route = $this->getRouteCollector()->getRoute($name);
+        $nodes = [];
+        $node = $this->getLeafNodeByRoute($route);
+        $parameterNameMap = array_filter(
+            $node->getParameterNameMap($route),
+            "is_string"
+        );
+
+        foreach ($parameterNameMap as $name) {
+            if (!isset($params[$name])) {
+                throw new \InvalidArgumentException();
+            }
+        }
+
+        while (null !== $node->getParent()) {
+            $nodes[] = $node;
+            $node = $node->getParent();
+        }
+
+        $path = "";
+        $index = 0;
+
+        foreach (array_reverse($nodes) as $node) {
+            $name = $parameterNameMap[$index++] ?? null;
+
+            if (null === $name) {
+                $path .= "/{$node->getDefaultValue()}";
+            } else {
+                $path .= "/{$params[$name]}";
+            }
+        }
+
+        if ($addQuery) {
+            $queryParams = array_diff_key($params, array_flip($parameterNameMap));
+
+            if (0 !== count($queryParams)) {
+                $path .= "?{$this->generateQuery($queryParams)}";
+            }
+        }
+
+        return $path;
+    }
+
+    /**
+     * Returns the query string.
+     *
+     * @param array $params The query parameters.
+     *
+     * @return string
+     */
+    protected function generateQuery(array $params): string
+    {
+        return http_build_query($params);
+    }
 }
