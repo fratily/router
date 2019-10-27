@@ -43,6 +43,11 @@ class Router
     private $cacheTtl;
 
     /**
+     * @var string
+     */
+    private $cachePrefix;
+
+    /**
      * @var SegmentNode
      */
     private $node;
@@ -59,6 +64,7 @@ class Router
      * @param SegmentManager      $segmentManager The segment manager
      * @param CacheInterface|null $cache The cache instance
      * @param int|null            $cacheTtl The cache ttl
+     * @param string              $cachePrefix The cache prefix
      *
      * @throws SimpleCacheInvalidArgumentException
      */
@@ -66,12 +72,14 @@ class Router
         RouteCollector $routeCollector,
         SegmentManager $segmentManager,
         CacheInterface $cache = null,
-        int $cacheTtl = null
+        int $cacheTtl = null,
+        string $cachePrefix = "fratily.router"
     ) {
         $this->routeCollector = $routeCollector;
         $this->segmentManager = $segmentManager;
         $this->cache = $cache;
         $this->cacheTtl = $cacheTtl;
+        $this->cachePrefix = $cachePrefix;
 
         $this->routeCollector->lock();
 
@@ -100,11 +108,18 @@ class Router
      */
     protected function generateInitializedNode(): array
     {
+        $nodeCacheName = $this->getCachePrefix() . ".node";
+        $nodesByRouteCacheName = $this->getCachePrefix() . ".nodesByRoute";
+
         if (
             null !== $this->getCache()
-            && $this->getCache()->has($this->getCacheKey())
+            && $this->getCache()->has($nodeCacheName)
+            && $this->getCache()->has($nodesByRouteCacheName)
         ) {
-            return $this->getCache()->get($this->getCacheKey());
+            return [
+                $this->getCache()->get($nodeCacheName),
+                $this->getCache()->get($nodesByRouteCacheName)
+            ];
         }
 
         $root = new SegmentNode(null);
@@ -176,6 +191,16 @@ class Router
             $nodesByRoute[$route] = $node;
         }
 
+        if (null !== $this->getCache()) {
+            $this->getCache()->setMultiple(
+                [
+                    $nodeCacheName => $root,
+                    $nodesByRouteCacheName => $nodesByRoute,
+                ],
+                $this->getCacheTtl()
+            );
+        }
+
         return [$root, $nodesByRoute];
     }
 
@@ -210,13 +235,23 @@ class Router
     }
 
     /**
+     * Returns the cache ttl.
+     *
+     * @return int
+     */
+    protected function getCacheTtl(): int
+    {
+        return $this->cacheTtl;
+    }
+
+    /**
      * Returns the cache key.
      *
      * @return string
      */
-    protected function getCacheKey(): string
+    protected function getCachePrefix(): string
     {
-        return "fratily.router.node";
+        return $this->cachePrefix;
     }
 
     /**
