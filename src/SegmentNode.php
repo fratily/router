@@ -19,6 +19,11 @@ namespace Fratily\Router;
 class SegmentNode
 {
     /**
+     * @var SegmentNode|null
+     */
+    private $parent;
+
+    /**
      * @var SegmentNode[]
      */
     private $children = [];
@@ -32,6 +37,26 @@ class SegmentNode
      * @var \SplObjectStorage|string[][]
      */
     private $parameterNameMapsByRoute;
+
+    /**
+     * Constructor.
+     *
+     * @param SegmentNode|null $parent The parent node
+     */
+    public function __construct(?SegmentNode $parent)
+    {
+        $this->parent = $parent;
+    }
+
+    /**
+     * Returns the parent node.
+     *
+     * @return SegmentNode|null
+     */
+    public function getParent(): ?SegmentNode
+    {
+        return $this->parent;
+    }
 
     /**
      * Returns the child segment names.
@@ -81,7 +106,7 @@ class SegmentNode
     public function addChild(string $segment): SegmentNode
     {
         if (!$this->hasChild($segment)) {
-            $this->children[$segment] = new SegmentNode();
+            $this->children[$segment] = new SegmentNode($this);
         }
 
         return $this->children[$segment];

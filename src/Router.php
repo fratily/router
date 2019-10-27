@@ -88,7 +88,7 @@ class Router
             return $this->getCache()->get($this->getCacheKey());
         }
 
-        $root = new SegmentNode();
+        $root = new SegmentNode(null);
         $sameSegmentNames = [];
 
         foreach ($this->getRouteCollector()->getRoutes() as $route) {
