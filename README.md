@@ -6,7 +6,7 @@ Can also do reverse routing as well as routing.
 ## Install
 
 ``` bash
-$ composer require 'fratily/router'
+$ composer require fratily/router
 ```
 
 ## Usage
@@ -26,8 +26,8 @@ $collector
 ;
 
 $segmentManager
-    ->addSegment(new \Fratily\Router\Segments\NumSegment())
-    ->addSegment(new \Fratily\Router\Segments\AnySegment(), true) // default rule
+    ->addSegment(new \Fratily\Router\Segments\NumSegment()) // `num`
+    ->addSegment(new \Fratily\Router\Segments\AnySegment(), true) // `any` default rule
 ;
 
 $router = new \Fratily\Router\Router($collector, $segmentManager);
