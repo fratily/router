@@ -322,9 +322,6 @@ class Router
         SegmentNode $node,
         string $method
     ): ?MatchedRoute {
-        static $i = 0;
-        $i++;
-
         if ($segmentStack->isEmpty()) {
             if (!$node->hasRoute($method)) {
                 return null;
