@@ -7,3 +7,10 @@ parameters:
         - src
         - tests
     level: max
+    ignoreErrors:
+        -
+            message: '#Method .*Test::(test|dataProvider).* no value type specified in iterable type .*#'
+            path: tests
+        -
+            message: '#Dynamic call to static method PHPUnit\\Framework\\Assert::assert.*\(\).*#'
+            path: tests

@@ -1,2 +1,8 @@
 /vendor/
 /composer.lock
+
+.phpunit.result.cache
+
+phpunit.xml
+phpstan.neon
+phpcs.xml

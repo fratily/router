@@ -1,112 +1,39 @@
 <?php
-/**
- * FratilyPHP Router
- *
- * Licensed under The MIT License
- * For full copyright and license information, please see the LICENSE.
- * Redistributions of files must retain the above copyright notice.
- *
- * @author     Kento Oka <kento-oka@kentoka.com>
- * @copyright (c) Kento Oka
- * @license   MIT
- * @since     1.0.0
- */
+
 namespace Fratily\Router;
 
-/**
- *
- */
+use InvalidArgumentException;
+
 class Route
 {
-    public const GET    = "GET";
-    public const POST   = "POST";
-    public const PUT    = "PUT";
-    public const PATCH  = "PATCH";
-    public const DELETE = "DELETE";
-
-    /**
-     * @var string
-     */
-    private $name;
-
-    /**
-     * @var string
-     */
-    private $path;
+    private string $path;
 
     /**
      * @var string[]
      */
-    private $methods;
+    private array $methods;
 
-    /**
-     * @var mixed|null
-     */
-    private $payload;
+    private ?bool $isStrictCheckTrailing = null;
+
+    private ?string $name;
+
+    private mixed $payload = null;
 
     /**
      * Constructor.
      *
-     * @param string $name The name
-     * @param string $path The path
-     * @param string[] $methods The http methods
+     * @param string $path The matching path string.
+     * @param string[] $methods The allow http methods.
+     * @param string|null $name The route name.
      */
-    public function __construct(
-        string $name,
-        string $path,
-        array $methods = null
-    ) {
-        $this
-            ->setName($name)
-            ->setPath($path)
-            ->setMethods($methods ?? [self::GET])
-        ;
-    }
-
-    /**
-     * Returns the name.
-     *
-     * @return string
-     */
-    public function getName(): string
+    public function __construct(string $path, array $methods, ?string $name = null)
     {
-        return $this->name;
-    }
-
-    /**
-     * Set the name.
-     *
-     * @param string $name The name
-     *
-     * @return $this
-     */
-    protected function setName(string $name): Route
-    {
+        $this->path($path)->methods($methods);
         $this->name = $name;
-
-        return $this;
-    }
-
-    /**
-     * Return an instance with the specified name.
-     *
-     * @param string $name The name
-     *
-     * @return $this
-     */
-    public function withName(string $name): Route
-    {
-        if ($this->name === $name) {
-            return $this;
-        }
-
-        return (clone $this)->setName($name);
     }
 
     /**
      * Returns the path.
-     *
-     * @return string
      */
     public function getPath(): string
     {
@@ -114,33 +41,36 @@ class Route
     }
 
     /**
-     * Set the path.
-     *
-     * @param string $path The path. Path must be percent encoded
-     *
-     * @return $this
+     * Set the matching path.
      */
-    protected function setPath(string $path): Route
+    public function path(string $path): self
     {
-        $this->path = "/" !== mb_substr($path, 0, 1) ? "/{$path}" : $path;
-
-        return $this;
-    }
-
-    /**
-     * Return an instance with the specified path.
-     *
-     * @param string $path The path. Path must be percent encoded
-     *
-     * @return $this
-     */
-    public function withPath(string $path): Route
-    {
-        if ($this->path === $path) {
-            return $this;
+        if ($path === '') {
+            throw new InvalidArgumentException('The path must not be an empty string.');
         }
 
-        return (clone $this)->setPath($path);
+        if (trim($path) !== $path) {
+            throw new InvalidArgumentException('The path must not start or end with a space');
+        }
+
+        if (!str_starts_with($path, '/')) {
+            throw new InvalidArgumentException('The path must start with a slash.');
+        }
+
+        if (str_contains($path, '//')) {
+            throw new InvalidArgumentException('The path must not contain consecutive slashes.');
+        }
+
+        /** @var string[] Regular expressions are fine, so they can never be false */
+        $mb_splitted_path = preg_split('//u' , $path, -1, PREG_SPLIT_NO_EMPTY);
+        $mb_length = count($mb_splitted_path);
+        if (strlen($path) !== $mb_length) {
+            throw new InvalidArgumentException('The path must not contain multibyte characters.');
+        }
+
+        $this->path = $path;
+
+        return $this;
     }
 
     /**
@@ -154,80 +84,80 @@ class Route
     }
 
     /**
-     * Set the methods.
+     * Set the matching HTTP methods.
      *
-     * @param string[] $methods The methods.
-     *
-     * @return $this
+     * @param string[] $methods
      */
-    protected function setMethods(array $methods): Route
+    public function methods(array $methods): self
     {
-        foreach ($methods as $index => $method) {
-            if (!is_string($method)) {
-                throw new \InvalidArgumentException();
+        if (count($methods) === 0) {
+            throw new InvalidArgumentException('The HTTP methods must be set.');
+        }
+
+        if ($methods !== array_values($methods)) {
+            throw new InvalidArgumentException('The HTTP methods must be of list type');
+        }
+
+        foreach ($methods as $method) {
+            if (!is_string($method) || $method === '') { // @phpstan-ignore-line
+                throw new InvalidArgumentException('The HTTP method must be a non empty string');
+            }
+
+            if (trim($method) !== $method) {
+                throw new InvalidArgumentException('The HTTP method must not start or end with a space');
             }
         }
 
-        $methods = array_values(array_unique($methods));
+        if ($methods !== array_unique($methods)) {
+            throw new InvalidArgumentException('The HTTP method must be a unique value in list');
+        }
 
-        $this->methods  = $methods;
+        $this->methods = $methods;
 
         return $this;
     }
 
     /**
-     * Return an instance with the specified methods.
-     *
-     * @param string[] $methods The methods
-     *
-     * @return $this
+     * Returns the name.
      */
-    public function withMethods(array $methods): Route
+    public function getName(): ?string
     {
-        if ($this->methods === $methods) {
-            return $this;
-        }
-
-        return (clone $this)->setMethods($methods);
+        return $this->name;
     }
 
     /**
      * Returns the payload.
-     *
-     * @return mixed|null
      */
-    public function getPayload()
+    public function getPayload(): mixed
     {
         return $this->payload;
     }
 
     /**
      * Set the payload.
-     *
-     * @param mixed|null $payload The payload.
-     *
-     * @return $this
      */
-    protected function setPayload($payload): Route
+    public function payload(mixed $payload): self
     {
-        $this->payload  = $payload;
+        $this->payload = $payload;
 
         return $this;
     }
 
     /**
-     * Return an instance with the specified payload.
-     *
-     * @param mixed|null $payload The payload
-     *
-     * @return $this
+     * Returns the strict check trailing setting.
      */
-    public function withPayload($payload): Route
+    public function isStrictCheckTrailing(): ?bool
     {
-        if ($this->payload === $payload) {
-            return $this;
-        }
+        return $this->isStrictCheckTrailing;
+    }
 
-        return (clone $this)->setPayload($payload);
+    /**
+     * Set to true to ensure the presence or absence of trailing slash.
+     */
+    public function strictCheckTrailing(?bool $isStrictCheckTrailing = true): self
+    {
+        $this->isStrictCheckTrailing = $isStrictCheckTrailing;
+
+        return $this;
     }
 }
