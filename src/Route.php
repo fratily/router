@@ -20,8 +20,9 @@ class Route
      */
     public function __construct(string $path, ?string $name = null)
     {
-        $this->path($path);
-        $this->name = $name;
+        $clone = $this->path($path)->name($name);
+        $this->path = $clone->path;
+        $this->name = $clone->name;
     }
 
     /**
@@ -60,9 +61,10 @@ class Route
             throw new InvalidArgumentException('The path must not contain multibyte characters.');
         }
 
-        $this->path = $path;
+        $clone = clone $this;
+        $clone->path = $path;
 
-        return $this;
+        return $clone;
     }
 
     /**
@@ -71,6 +73,16 @@ class Route
     public function getName(): ?string
     {
         return $this->name;
+    }
+
+    /**
+     * Set the name.
+     */
+    public function name(?string $name): self
+    {
+        $clone = clone $this;
+        $clone->name = $name;
+        return $clone;
     }
 
     /**
@@ -86,9 +98,9 @@ class Route
      */
     public function payload(mixed $payload): self
     {
-        $this->payload = $payload;
-
-        return $this;
+        $clone = clone $this;
+        $clone->payload = $payload;
+        return $clone;
     }
 
     /**
@@ -104,8 +116,8 @@ class Route
      */
     public function strictCheckTrailing(?bool $isStrictCheckTrailing = true): self
     {
-        $this->isStrictCheckTrailing = $isStrictCheckTrailing;
-
-        return $this;
+        $clone = clone $this;
+        $clone->isStrictCheckTrailing = $isStrictCheckTrailing;
+        return $clone;
     }
 }

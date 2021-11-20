@@ -8,11 +8,6 @@ use stdClass;
 
 class PayloadTest extends TestCase
 {
-    public function testInitialValueIsNull(): void
-    {
-        $this->assertNull((new Route('/'))->getPayload());
-    }
-
     /**
      * @dataProvider dataProviderSettableAndGettable
      */
@@ -20,8 +15,10 @@ class PayloadTest extends TestCase
     {
         $route = new Route('/');
 
-        $route->payload($value);
-        $this->assertSame($value, $route->getPayload());
+        $this->assertNull($route->getPayload());
+        $nextRoute = $route->payload($value);
+        $this->assertNull($route->getPayload());
+        $this->assertSame($value, $nextRoute->getPayload());
     }
 
     public function dataProviderSettableAndGettable(): iterable
@@ -50,19 +47,5 @@ class PayloadTest extends TestCase
         foreach ($values as $key => $value) {
             yield "fn(): {$key}" => [fn() => $value];
         }
-    }
-
-    public function testOverwriteable(): void
-    {
-        $route = new Route('/');
-
-        $route->payload(123);
-        $this->assertSame(123, $route->getPayload());
-
-        $route->payload('string');
-        $this->assertSame('string', $route->getPayload());
-
-        $route->payload(null);
-        $this->assertNull($route->getPayload());
     }
 }

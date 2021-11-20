@@ -7,11 +7,6 @@ use PHPUnit\Framework\TestCase;
 
 class NameTest extends TestCase
 {
-    public function testInitialValueIsNull(): void
-    {
-        $this->assertNull((new Route('/'))->getName());
-    }
-
     /**
      * @dataProvider dataProviderSettableAndGettable
      */
@@ -20,6 +15,19 @@ class NameTest extends TestCase
         $route = new Route('/', $name);
 
         $this->assertSame($name, $route->getName());
+    }
+
+    /**
+     * @dataProvider dataProviderSettableAndGettable
+     */
+    public function testSettableAndGettable(mixed $value): void
+    {
+        $route = new Route('/');
+
+        $this->assertNull($route->getName());
+        $nextRoute = $route->name($value);
+        $this->assertNull($route->getName());
+        $this->assertSame($value, $nextRoute->getName());
     }
 
     public function dataProviderSettableAndGettable(): array

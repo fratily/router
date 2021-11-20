@@ -7,11 +7,6 @@ use PHPUnit\Framework\TestCase;
 
 class StrictCheckTrailingTest extends TestCase
 {
-    public function testInitialValueIsNull(): void
-    {
-        $this->assertNull((new Route('/'))->isStrictCheckTrailing());
-    }
-
     /**
      * @dataProvider dataProviderSettableAndGettable
      */
@@ -19,26 +14,14 @@ class StrictCheckTrailingTest extends TestCase
     {
         $route = new Route('/');
 
-        $route->strictCheckTrailing($value);
-        $this->assertSame($value, $route->isStrictCheckTrailing());
+        $this->assertNull($route->isStrictCheckTrailing());
+        $nextRoute = $route->strictCheckTrailing($value);
+        $this->assertNull($route->isStrictCheckTrailing());
+        $this->assertSame($value, $nextRoute->isStrictCheckTrailing());
     }
 
     public function dataProviderSettableAndGettable(): array
     {
         return [[true], [false], [null]];
-    }
-
-    public function testOverwriteable(): void
-    {
-        $route = new Route('/');
-
-        $route->strictCheckTrailing(true);
-        $this->assertTrue($route->isStrictCheckTrailing());
-
-        $route->strictCheckTrailing(false);
-        $this->assertFalse($route->isStrictCheckTrailing());
-
-        $route->strictCheckTrailing(null);
-        $this->assertNull($route->isStrictCheckTrailing());
     }
 }

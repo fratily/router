@@ -15,8 +15,10 @@ class PathTest extends TestCase
     {
         $route = new Route('/');
 
-        $route->path($value);
-        $this->assertSame($value, $route->getPath());
+        $this->assertSame('/', $route->getPath());
+        $nextRoute = $route->path($value);
+        $this->assertSame('/', $route->getPath());
+        $this->assertSame($value, $nextRoute->getPath());
     }
 
     public function dataProviderSettableAndGettable(): array
@@ -55,19 +57,5 @@ class PathTest extends TestCase
             'contain consecutive slashes' => ['/abc//def'],
             'end with consecutive slashes' => ['/abc/def//'],
         ];
-    }
-
-    public function testOverwriteable(): void
-    {
-        $route = new Route('/');
-
-        $route->path('/abc');
-        $this->assertSame('/abc', $route->getPath());
-
-        $route->path('/def');
-        $this->assertSame('/def', $route->getPath());
-
-        $route->path('/');
-        $this->assertSame('/', $route->getPath());
     }
 }
