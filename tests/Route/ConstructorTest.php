@@ -11,19 +11,11 @@ class ConstructorTest extends TestCase
     /**
      * @dataProvider dataProviderSettable
      */
-    public function testSettable(
-        string $path,
-        array $methods,
-        ?string $name,
-        string $expectedPath,
-        array $expectedMethods,
-        ?string $expectedName
-    ): void
+    public function testSettable(string $path, ?string $name, string $expectedPath, ?string $expectedName): void
     {
-        $route = new Route($path, $methods, $name);
+        $route = new Route($path, $name);
 
         $this->assertSame($expectedPath, $route->getPath());
-        $this->assertSame($expectedMethods, $route->getMethods());
         $this->assertSame($expectedName, $route->getName());
     }
 
@@ -34,10 +26,6 @@ class ConstructorTest extends TestCase
             ['/abc', '/abc'],
             ['/abc/', '/abc/'],
         ];
-        $methodsPatterns = [
-            [['string'], ['string']],
-            [['string', 'GET'], ['string', 'GET']],
-        ];
         $namePatterns = [
             ['name', 'name'],
             [' name', ' name'],
@@ -47,17 +35,13 @@ class ConstructorTest extends TestCase
         ];
 
         foreach ($pathPatterns as $pathPattern) {
-            foreach ($methodsPatterns as $methodsPattern) {
-                foreach ($namePatterns as $namePattern) {
-                    yield [
-                        $pathPattern[0],
-                        $methodsPattern[0],
-                        $namePattern[0],
-                        $pathPattern[1],
-                        $methodsPattern[1],
-                        $namePattern[1],
-                    ];
-                }
+            foreach ($namePatterns as $namePattern) {
+                yield [
+                    $pathPattern[0],
+                    $namePattern[0],
+                    $pathPattern[1],
+                    $namePattern[1],
+                ];
             }
         }
     }

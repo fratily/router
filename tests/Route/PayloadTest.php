@@ -10,7 +10,7 @@ class PayloadTest extends TestCase
 {
     public function testInitialValueIsNull(): void
     {
-        $this->assertNull((new Route('/', ['GET']))->getPayload());
+        $this->assertNull((new Route('/'))->getPayload());
     }
 
     /**
@@ -18,7 +18,7 @@ class PayloadTest extends TestCase
      */
     public function testSettableAndGettable(mixed $value): void
     {
-        $route = new Route('/', ['GET']);
+        $route = new Route('/');
 
         $route->payload($value);
         $this->assertSame($value, $route->getPayload());
@@ -54,7 +54,7 @@ class PayloadTest extends TestCase
 
     public function testOverwriteable(): void
     {
-        $route = new Route('/', ['GET']);
+        $route = new Route('/');
 
         $route->payload(123);
         $this->assertSame(123, $route->getPayload());

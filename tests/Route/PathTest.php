@@ -13,7 +13,7 @@ class PathTest extends TestCase
      */
     public function testSettableAndGettable(string $value): void
     {
-        $route = new Route('/', ['GET']);
+        $route = new Route('/');
 
         $route->path($value);
         $this->assertSame($value, $route->getPath());
@@ -37,7 +37,7 @@ class PathTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $route = new Route('/', ['GET']);
+        $route = new Route('/');
 
         $route->path($value);
     }
@@ -59,7 +59,7 @@ class PathTest extends TestCase
 
     public function testOverwriteable(): void
     {
-        $route = new Route('/', ['GET']);
+        $route = new Route('/');
 
         $route->path('/abc');
         $this->assertSame('/abc', $route->getPath());

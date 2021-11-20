@@ -9,7 +9,7 @@ class StrictCheckTrailingTest extends TestCase
 {
     public function testInitialValueIsNull(): void
     {
-        $this->assertNull((new Route('/', ['GET']))->isStrictCheckTrailing());
+        $this->assertNull((new Route('/'))->isStrictCheckTrailing());
     }
 
     /**
@@ -17,7 +17,7 @@ class StrictCheckTrailingTest extends TestCase
      */
     public function testSettableAndGettable(?bool $value): void
     {
-        $route = new Route('/', ['GET']);
+        $route = new Route('/');
 
         $route->strictCheckTrailing($value);
         $this->assertSame($value, $route->isStrictCheckTrailing());
@@ -30,7 +30,7 @@ class StrictCheckTrailingTest extends TestCase
 
     public function testOverwriteable(): void
     {
-        $route = new Route('/', ['GET']);
+        $route = new Route('/');
 
         $route->strictCheckTrailing(true);
         $this->assertTrue($route->isStrictCheckTrailing());

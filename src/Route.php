@@ -8,11 +8,6 @@ class Route
 {
     private string $path;
 
-    /**
-     * @var string[]
-     */
-    private array $methods;
-
     private ?bool $isStrictCheckTrailing = null;
 
     private ?string $name;
@@ -20,15 +15,12 @@ class Route
     private mixed $payload = null;
 
     /**
-     * Constructor.
-     *
      * @param string $path The matching path string.
-     * @param string[] $methods The allow http methods.
      * @param string|null $name The route name.
      */
-    public function __construct(string $path, array $methods, ?string $name = null)
+    public function __construct(string $path, ?string $name = null)
     {
-        $this->path($path)->methods($methods);
+        $this->path($path);
         $this->name = $name;
     }
 
@@ -69,50 +61,6 @@ class Route
         }
 
         $this->path = $path;
-
-        return $this;
-    }
-
-    /**
-     * Returns the methods.
-     *
-     * @return string[]
-     */
-    public function getMethods(): array
-    {
-        return $this->methods;
-    }
-
-    /**
-     * Set the matching HTTP methods.
-     *
-     * @param string[] $methods
-     */
-    public function methods(array $methods): self
-    {
-        if (count($methods) === 0) {
-            throw new InvalidArgumentException('The HTTP methods must be set.');
-        }
-
-        if ($methods !== array_values($methods)) {
-            throw new InvalidArgumentException('The HTTP methods must be of list type');
-        }
-
-        foreach ($methods as $method) {
-            if (!is_string($method) || $method === '') { // @phpstan-ignore-line
-                throw new InvalidArgumentException('The HTTP method must be a non empty string');
-            }
-
-            if (trim($method) !== $method) {
-                throw new InvalidArgumentException('The HTTP method must not start or end with a space');
-            }
-        }
-
-        if ($methods !== array_unique($methods)) {
-            throw new InvalidArgumentException('The HTTP method must be a unique value in list');
-        }
-
-        $this->methods = $methods;
 
         return $this;
     }

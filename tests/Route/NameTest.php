@@ -9,7 +9,7 @@ class NameTest extends TestCase
 {
     public function testInitialValueIsNull(): void
     {
-        $this->assertNull((new Route('/', ['GET']))->getName());
+        $this->assertNull((new Route('/'))->getName());
     }
 
     /**
@@ -17,7 +17,7 @@ class NameTest extends TestCase
      */
     public function testGettable(?string $name): void
     {
-        $route = new Route('/', ['GET'], $name);
+        $route = new Route('/', $name);
 
         $this->assertSame($name, $route->getName());
     }
