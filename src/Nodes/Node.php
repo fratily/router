@@ -13,16 +13,10 @@ abstract class Node
     private array $children = [];
 
     /**
-     * @var array Node[]
-     * @phpstan-var array<string,Node>
+     * @var array Node[][]
+     * @phpstan-var array<positive-int,array<string,Node>>
      */
     private array $childrenForSkippablePath = [];
-
-    /**
-     * @var int[] List of key lengths sorted in descending order.
-     * @phpstan-var positive-int[]
-     */
-    private array $skippablePathLengths = [];
 
     private ?Route $matchRoute = null;
 
@@ -37,35 +31,35 @@ abstract class Node
         $this->parent = $parent;
     }
 
-    public function addChild(Node $node): void
+    public function addChild(Node $childNode): void
     {
-        if ($node->parent !== $this) {
+        if ($childNode->getParent() !== $this) {
             throw new InvalidArgumentException();
         }
 
-        $this->children[] = $node;
-    }
+        $this->children[] = $childNode;
 
-    public function addChildForSkippablePath(string $skippablePath, Node $node): void
-    {
-        if (isset($this->childrenForSkippablePath[$skippablePath])) {
-            throw new InvalidArgumentException();
+        $checkTargetNode = $childNode;
+        $skippablePath = '';
+        $skippableSegmentCount = 0;
+        while ($checkTargetParentNode = $checkTargetNode->getParent()) {
+            if (!$checkTargetNode instanceof BlankNode && !$checkTargetNode instanceof SameNode) {
+                break;
+            }
+
+            $segment = $checkTargetNode instanceof SameNode ? $checkTargetNode->getSegment() : '';
+            $skippablePath = '/' . $segment . $skippablePath;
+            $skippableSegmentCount += 1;
+
+            if (isset($checkTargetParentNode->childrenForSkippablePath[$skippableSegmentCount][$skippablePath])) {
+                throw new InvalidArgumentException();
+            }
+
+            $checkTargetParentNode->childrenForSkippablePath[$skippableSegmentCount][$skippablePath] = $childNode;
+            krsort($checkTargetParentNode->childrenForSkippablePath, SORT_NUMERIC);
+
+            $checkTargetNode = $checkTargetParentNode;
         }
-
-        if (($length = strlen($skippablePath)) === 0) {
-            throw new InvalidArgumentException();
-        }
-
-
-        if (!str_starts_with($skippablePath, '/')) {
-            throw new InvalidArgumentException();
-        }
-
-        $this->childrenForSkippablePath[$skippablePath] = $node;
-        $this->skippablePathLengths[] = $length;
-
-        $this->skippablePathLengths = array_unique($this->skippablePathLengths);
-        rsort($this->skippablePathLengths, SORT_NUMERIC);
     }
 
     public function getParent(): ?Node
@@ -110,24 +104,21 @@ abstract class Node
      */
     public function getMatchedChildrenForSkippablePath(string $remainingPath): iterable
     {
-        foreach ($this->skippablePathLengths as $length) {
-            if (strlen($remainingPath) < $length) {
+        $remainingSegments = explode('/', substr($remainingPath, 1));
+        $remainingSegmentsCount = count($remainingSegments);
+
+        foreach ($this->childrenForSkippablePath as $skippableSegmentsCount => $nodeBySkippablePath) {
+            if ($remainingSegmentsCount < $skippableSegmentsCount) {
                 continue;
             }
 
-            $comparePath = substr($remainingPath, 0, $length);
-            $nextRemainingPath = substr($remainingPath, $length);
+            $skippableRemainingPath = '/' . implode('/', array_slice($remainingSegments, 0, $skippableSegmentsCount));
 
-            if ($nextRemainingPath === '') {
-                $nextRemainingPath = null;
-            }
-
-            if ($nextRemainingPath !== null && !str_starts_with($nextRemainingPath, '/')) {
-                continue;
-            }
-
-            if (isset($this->childrenForSkippablePath[$comparePath])) {
-                yield ['node' => $this->childrenForSkippablePath[$comparePath], 'remainingPath' => $nextRemainingPath];
+            if (isset($nodeBySkippablePath[$skippableRemainingPath])) {
+                yield [
+                    'node' => $nodeBySkippablePath[$skippableRemainingPath],
+                    'remainingPath' => implode('/', array_slice($remainingSegments, $skippableSegmentsCount))
+                ];
             }
         }
     }
