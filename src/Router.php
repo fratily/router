@@ -30,7 +30,8 @@ class Router
             return null;
         }
 
-        $matchNode = self::nodeExplore($this->tree, $path);
+        $segments = Segment::split($path);
+        $matchNode = self::nodeExplore($this->tree, $segments);
 
         if ($matchNode === null) {
             return null;
@@ -42,35 +43,37 @@ class Router
 
         return [
             'route' => $matchNode->getMatchRoute(),
-            'params' => self::makeNameParamMap($matchNode->getSegmentIndexByName(), $path),
+            'params' => array_map(
+                fn($index) => $segments[$index] ?? throw new LogicException(),
+                $matchNode->getSegmentIndexByName()
+            ),
         ];
     }
 
-    private static function nodeExplore(Node $currentNode, ?string $remainingPath): ?Node {
-        if ($remainingPath === null) {
+    /**
+     * @param Node $currentNode
+     * @param string[] $remainingSegments
+     */
+    private static function nodeExplore(Node $currentNode, array $remainingSegments): ?Node {
+        if (count($remainingSegments) === 0) {
             return $currentNode->getMatchRoute() !== null ? $currentNode : null;
         }
 
-        foreach ($currentNode->getMatchedChildrenForSkippablePath($remainingPath) as $match) {
-            ['node' => $matchNode, 'remainingPath' => $nextRemainingPath] = $match;
+        foreach ($currentNode->getMatchedChildrenForSkippablePath($remainingSegments) as $match) {
+            ['node' => $matchNode, 'remainingSegments' => $nextRemainingSegments] = $match;
 
-            $resultNode = self::nodeExplore($matchNode, $nextRemainingPath);
+            $resultNode = self::nodeExplore($matchNode, $nextRemainingSegments);
 
             if ($resultNode !== null) {
                 return $resultNode;
             }
         }
 
-        $splittedPath = explode('/', $remainingPath, 3);
-        $segment = $splittedPath[1];
-        $nextRemainingPath = $splittedPath[2] ?? null;
-
-        if ($nextRemainingPath !== null) {
-            $nextRemainingPath = '/' . $nextRemainingPath;
-        }
+        $segment = array_slice($remainingSegments, 0, 1)[0];
+        $nextRemainingSegments = array_slice($remainingSegments, 1);
 
         foreach ($currentNode->getMatchedChildren($segment) as $childNode) {
-            $resultNode = self::nodeExplore($childNode, $nextRemainingPath);
+            $resultNode = self::nodeExplore($childNode, $nextRemainingSegments);
 
             if ($resultNode !== null) {
                 return $resultNode;
@@ -78,23 +81,5 @@ class Router
         }
 
         return null;
-    }
-
-    /**
-     * @param int[] $segmentIndexByName
-     * @param string $path
-     * @return string[]
-     *
-     * @phpstan-param array<string,int<0,max>> $segmentIndexByName
-     * @phpstan-return array<string,string>
-     */
-    private static function makeNameParamMap(array $segmentIndexByName, string $path): array
-    {
-        $segments = explode('/', substr($path, 1));
-
-        return array_map(
-            fn($index) => $segments[$index] ?? throw new LogicException(),
-            $segmentIndexByName
-        );
     }
 }

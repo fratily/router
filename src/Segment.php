@@ -6,6 +6,7 @@ use Fratily\PathParser\PathParser;
 use Fratily\PathParser\Segments\PlainSegment;
 use Fratily\PathParser\Segments\NamedSegment\ColonNamedSegment;
 use Fratily\PathParser\Segments\SlashSegment;
+use InvalidArgumentException;
 
 class Segment
 {
@@ -39,5 +40,31 @@ class Segment
         }
 
         return $segments;
+    }
+
+    /**
+     * @return string[]
+     */
+    public static function split(string $path): array
+    {
+        if (!str_starts_with($path, '/')) {
+            throw new InvalidArgumentException();
+        }
+
+        return explode('/', substr($path, 1));
+    }
+
+    /**
+     * @param string[] $segments
+     * @param int $offset
+     * @param int $limit
+     * @return string
+     *
+     * @phpstan-param int<0,max> $offset
+     * @phpstan-param positive-int|null $limit
+     */
+    public static function join(array $segments, int $offset = 0, int $limit = null): string
+    {
+        return '/' . implode('/', array_slice($segments, $offset, $limit));
     }
 }

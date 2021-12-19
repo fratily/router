@@ -3,6 +3,7 @@
 namespace Fratily\Router\Nodes;
 
 use Fratily\Router\Route;
+use Fratily\Router\Segment;
 use InvalidArgumentException;
 
 abstract class Node
@@ -97,14 +98,13 @@ abstract class Node
     /**
      * Returns the descendant node that pre-matches the path and the remaining paths when that node is matched.
      *
-     * @param string $remainingPath Remaining paths starting with a slash.
+     * @param string[] $remainingSegments
      * @return array[]
      *
-     * @phpstan-return iterable<array{node:Node,remainingPath:string|null}>
+     * @phpstan-return iterable<array{node:Node,remainingSegments:string[]}>
      */
-    public function getMatchedChildrenForSkippablePath(string $remainingPath): iterable
+    public function getMatchedChildrenForSkippablePath(array $remainingSegments): iterable
     {
-        $remainingSegments = explode('/', substr($remainingPath, 1));
         $remainingSegmentsCount = count($remainingSegments);
 
         foreach ($this->childrenForSkippablePath as $skippableSegmentsCount => $nodeBySkippablePath) {
@@ -112,12 +112,12 @@ abstract class Node
                 continue;
             }
 
-            $skippableRemainingPath = '/' . implode('/', array_slice($remainingSegments, 0, $skippableSegmentsCount));
+            $skippableRemainingPath = Segment::join($remainingSegments, 0, $skippableSegmentsCount);
 
             if (isset($nodeBySkippablePath[$skippableRemainingPath])) {
                 yield [
                     'node' => $nodeBySkippablePath[$skippableRemainingPath],
-                    'remainingPath' => implode('/', array_slice($remainingSegments, $skippableSegmentsCount))
+                    'remainingSegments' => array_slice($remainingSegments, $skippableSegmentsCount)
                 ];
             }
         }
