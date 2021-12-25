@@ -14,7 +14,7 @@ class Router
     }
 
     /**
-     * @phpstan-return array{route:Route,params:array<string,string>}|null
+     * @phpstan-return array{route:Route|null,params:array<string,string>}
      */
     public function match(string $path): ?array
     {
@@ -27,14 +27,14 @@ class Router
                 return ['route' => $this->tree->getMatchRoute(), 'params' => []];
             }
 
-            return null;
+            return ['route' => null, 'params' => []];
         }
 
         $segments = Segment::split($path);
         $matchNode = self::nodeExplore($this->tree, $segments);
 
         if ($matchNode === null) {
-            return null;
+            return ['route' => null, 'params' => []];
         }
 
         if ($matchNode->getMatchRoute() === null || $matchNode->getSegmentIndexByName() === null) {
