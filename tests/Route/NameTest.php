@@ -20,7 +20,7 @@ class NameTest extends TestCase
     /**
      * @dataProvider dataProviderSettableAndGettable
      */
-    public function testSettableAndGettable(mixed $value): void
+    public function testSettableAndGettable(?string $value): void
     {
         $route = new Route('/');
 
