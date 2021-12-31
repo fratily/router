@@ -3,6 +3,7 @@
 namespace Fratily\Tests\Router\Router;
 
 use Fratily\Router\Route;
+use Fratily\Router\RouteOption;
 use Fratily\Router\Router;
 use Fratily\Router\RouterBuilder;
 use PHPUnit\Framework\TestCase;
@@ -42,14 +43,15 @@ class MatchTest extends TestCase
      */
     public function dataProviderRouting(): iterable
     {
+        $option = new RouteOption();
         $router = (new RouterBuilder([
-            (new Route('/')),
-            (new Route('/foo'))->strictCheckTrailing(false),
-            (new Route('/bar/'))->strictCheckTrailing(false),
-            (new Route('/:param1')),
-            (new Route('/:param1/foo/bar/:param2')),
-            (new Route('/baz/:param2(\d+)')),
-            (new Route('/baz/:param2(\d+)/foo')),
+            (new Route('/', $option)),
+            (new Route('/foo', $option->strictCheckTrailing(false))),
+            (new Route('/bar/', $option->strictCheckTrailing(false))),
+            (new Route('/:param1', $option)),
+            (new Route('/:param1/foo/bar/:param2', $option)),
+            (new Route('/baz/:param2(\d+)', $option)),
+            (new Route('/baz/:param2(\d+)/foo', $option)),
         ]))->build();
 
         yield from [

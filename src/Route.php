@@ -8,21 +8,21 @@ class Route
 {
     private string $path;
 
-    private ?bool $isStrictCheckTrailing = null;
+    private RouteOption $option;
 
-    private ?string $name;
+    private ?string $name = null;
 
     private mixed $payload = null;
 
     /**
      * @param string $path The matching path string.
-     * @param string|null $name The route name.
+     * @param RouteOption $option The matching rule option.
      */
-    public function __construct(string $path, ?string $name = null)
+    public function __construct(string $path, RouteOption $option)
     {
-        $clone = $this->path($path)->name($name);
+        $clone = $this->path($path);
         $this->path = $clone->path;
-        $this->name = $clone->name;
+        $this->option = $option;
     }
 
     /**
@@ -68,6 +68,24 @@ class Route
     }
 
     /**
+     * Returns the matching rule option.
+     */
+    public function getOption(): RouteOption
+    {
+        return $this->option;
+    }
+
+    /**
+     * Set the matching rule option.
+     */
+    public function option(RouteOption $option): self
+    {
+        $clone = clone $this;
+        $clone->option = $option;
+        return $clone;
+    }
+
+    /**
      * Returns the name.
      */
     public function getName(): ?string
@@ -100,24 +118,6 @@ class Route
     {
         $clone = clone $this;
         $clone->payload = $payload;
-        return $clone;
-    }
-
-    /**
-     * Returns the strict check trailing setting.
-     */
-    public function isStrictCheckTrailing(): ?bool
-    {
-        return $this->isStrictCheckTrailing;
-    }
-
-    /**
-     * Set to true to ensure the presence or absence of trailing slash.
-     */
-    public function strictCheckTrailing(?bool $isStrictCheckTrailing = true): self
-    {
-        $clone = clone $this;
-        $clone->isStrictCheckTrailing = $isStrictCheckTrailing;
         return $clone;
     }
 }

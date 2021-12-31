@@ -11,12 +11,17 @@ $ composer require fratily/router
 ## Usage
 
 ```php
+use Fraitily\Router\RouterBuilder;
+use Fraitily\Router\Route;
+use Fraitily\Router\RouteOption;
+
+$option = new RouteOption();
 $routes = [
-    (new Route('/'))->strictCheckTrailing(false),
-    (new Route('/foo/bar'))->strictCheckTrailing(false),
-    (new Route('/foo/:name')),
+    new Route('/', $option->strictCheckTrailing(false)),
+    new Route('/foo/bar', $option->strictCheckTrailing(false)),
+    new Route('/foo/:name'),
     $matchRoute = (new Route('/foo/:name/setting')),
-    (new Route('/foo/:name/profile')),
+    new Route('/foo/:name/profile'),
     new Route('/bar'),
     new Route('/baz'),
 ];

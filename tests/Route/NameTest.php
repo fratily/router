@@ -3,6 +3,7 @@
 namespace Fratily\Tests\Router\Route;
 
 use Fratily\Router\Route;
+use Fratily\Router\RouteOption;
 use PHPUnit\Framework\TestCase;
 
 class NameTest extends TestCase
@@ -10,19 +11,9 @@ class NameTest extends TestCase
     /**
      * @dataProvider dataProviderSettableAndGettable
      */
-    public function testGettable(?string $name): void
-    {
-        $route = new Route('/', $name);
-
-        $this->assertSame($name, $route->getName());
-    }
-
-    /**
-     * @dataProvider dataProviderSettableAndGettable
-     */
     public function testSettableAndGettable(?string $value): void
     {
-        $route = new Route('/');
+        $route = new Route('/', new RouteOption());
 
         $this->assertNull($route->getName());
         $nextRoute = $route->name($value);
