@@ -3,6 +3,7 @@
 namespace Fratily\Tests\Router\Route;
 
 use Fratily\Router\Route;
+use Fratily\Router\RouteOption;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
@@ -13,7 +14,7 @@ class PayloadTest extends TestCase
      */
     public function testSettableAndGettable(mixed $value): void
     {
-        $route = new Route('/');
+        $route = new Route('/', new RouteOption());
 
         $this->assertNull($route->getPayload());
         $nextRoute = $route->payload($value);

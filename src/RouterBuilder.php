@@ -28,16 +28,8 @@ class RouterBuilder
         $this->routes = $routes;
     }
 
-    /**
-     * @phpstan-param array{strict_check_trailing?:bool} $options
-     */
-    public function build(array $options = []): Router
+    public function build(): Router
     {
-        /** @phpstan-var array{strict_check_trailing:bool} */
-        $options = array_merge([
-            'strict_check_trailing' => true,
-        ], $options);
-
         $rootNode = new RootNode();
         foreach ($this->routes as $route) {
             $parentNode = $rootNode;
@@ -65,7 +57,7 @@ class RouterBuilder
             }
 
             $lastNode->markAsTheEnd($route, $segmentIndexByName);
-            $isStrictCheckTrailing = $route->isStrictCheckTrailing() ?? $options['strict_check_trailing'];
+            $isStrictCheckTrailing = $route->getOption()->isStrictCheckTrailing();
             if (!$isStrictCheckTrailing) {
                 if ($lastNode instanceof BlankNode) {
                     if ($lastNode->getParent() === null) {
