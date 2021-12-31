@@ -11,6 +11,11 @@ $ composer require fratily/router
 ## Usage
 
 ```php
+use Fraitily\Router\RouterBuilder;
+use Fraitily\Router\Route;
+use Fraitily\Router\RouteOption;
+
+$option = new RouteOption();
 $routes = [
     new Route('/', $option->strictCheckTrailing(false)),
     new Route('/foo/bar', $option->strictCheckTrailing(false)),
