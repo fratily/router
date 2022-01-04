@@ -141,4 +141,21 @@ class RouterBuilder
 
         return new RegexNode($parentNode, $segment->getOption());
     }
+
+    public function buildReverseRouter(): ReverseRouter
+    {
+        $routeConfigs = [];
+        foreach ($this->routes as $route) {
+            if ($route->getName() === null) {
+                continue;
+            }
+
+            $routeConfigs[$route->getName()] = [
+                ReverseRouter::CONF_KEY_SEGMENT => Segment::parse($route->getPath()),
+                ReverseRouter::CONF_KEY_QUERY => $route->getOption()->getQueries(),
+            ];
+        }
+
+        return new ReverseRouter($routeConfigs);
+    }
 }
