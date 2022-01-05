@@ -98,8 +98,11 @@ class ReverseRouter
      *
      * If necessary, add a question mark as a prefix.
      *
+     * TODO: 今のままでは `key[abc]=1` 等が扱えない。
+     * http_build_queryと同等の引数を受け付けながら処理するようにする。
+     *
      * @param bool[]|null $queries
-     * @param mixed[] $params
+     * @param string[] $params
      * @return string
      *
      * @phpstan-param Queries $queries
