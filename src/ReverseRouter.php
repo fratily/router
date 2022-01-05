@@ -6,7 +6,6 @@ use Fratily\PathParser\Segments\PlainSegment;
 use Fratily\PathParser\Segments\NamedSegment\ColonNamedSegment;
 use Fratily\PathParser\Segments\SlashSegment;
 use InvalidArgumentException;
-use LogicException;
 
 /**
  * @phpstan-import-type Queries from RouteOption
@@ -51,7 +50,7 @@ class ReverseRouter
         ?string $fragment = null
     ): string {
         if (!isset($this->routesConfig[$name])) {
-            throw new InvalidArgumentException();
+            throw new InvalidArgumentException("The route with the name {$name} was not found.");
         }
 
         [
@@ -78,7 +77,7 @@ class ReverseRouter
     public static function makePath(array $segments, array $params = []): string
     {
         if (count($segments) === 0) {
-            throw new InvalidArgumentException();
+            throw new InvalidArgumentException('At least one segment is required to generate the path.');
         }
 
         $path = '';
@@ -87,7 +86,7 @@ class ReverseRouter
                 $segment instanceof SlashSegment => '/',
                 $segment instanceof PlainSegment => '/' . $segment->getSegment(),
                 /** @phpstan-ignore-next-line ColonNamedSegment will always evaluate to true. */
-                $segment instanceof ColonNamedSegment => '/' . rawurlencode((string)($params[$segment->getName()] ?? throw new InvalidArgumentException())),
+                $segment instanceof ColonNamedSegment => '/' . rawurlencode($params[$segment->getName()] ?? throw new InvalidArgumentException("Must specify the path parameter {$segment->getName()}.")),
             };
         }
 
@@ -116,7 +115,7 @@ class ReverseRouter
         } else {
             foreach ($queries as $queryKey => $required) {
                 if ($required) {
-                    $use_params[$queryKey] = $params[$queryKey] ?? throw new InvalidArgumentException();
+                    $use_params[$queryKey] = $params[$queryKey] ?? throw new InvalidArgumentException("Must specify query parameter {$queryKey}.");
                 } elseif (isset($params[$queryKey])) {
                     $use_params[$queryKey] = $params[$queryKey];
                 }
