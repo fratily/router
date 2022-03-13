@@ -11,9 +11,9 @@ $ composer require fratily/router
 ## Usage
 
 ```php
-use Fraitily\Router\RouterBuilder;
-use Fraitily\Router\Route;
-use Fraitily\Router\RouteOption;
+use Fratily\Router\RouterBuilder;
+use Fratily\Router\Route;
+use Fratily\Router\RouteOption;
 
 $option = new RouteOption();
 $routes = [
