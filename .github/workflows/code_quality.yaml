@@ -37,7 +37,7 @@ jobs:
         run: "composer install --no-interaction --no-progress"
 
       - name: "Test"
-        run: "composer phpunit"
+        run: "composer test"
 
   format:
     name: "Format"
@@ -63,7 +63,7 @@ jobs:
         run: "composer install --no-interaction --no-progress"
 
       - name: "Format"
-        run: "composer phpcs"
+        run: "composer format"
 
   lint:
     name: "Lint"
@@ -89,4 +89,4 @@ jobs:
         run: "composer install --no-interaction --no-progress"
 
       - name: "Lint"
-        run: "composer phpstan"
+        run: "composer lint"
