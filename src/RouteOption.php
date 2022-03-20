@@ -88,7 +88,8 @@ class RouteOption
      * - ['param1' => true, 'param2' => false, 'param3']
      *   - param1: This is an absolutely necessary parameter for reverse routing.
      *   - param2: This is a parameter that does not need to be specified for reverse routing.
-     *   - param3: This is a parameter that does not need to be specified for reverse routing. (Depends on the setting of query_required_default)
+     *   - param3: This is a parameter that does not need to be specified for reverse routing.
+     *     Depends on the setting of query_required_default
      * - null
      *   - If NULL is specified, all parameters specified during reverse routing are allowed.
      *

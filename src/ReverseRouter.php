@@ -86,8 +86,10 @@ class ReverseRouter
             $path .= match (true) {
                 $segment instanceof SlashSegment => '/',
                 $segment instanceof PlainSegment => '/' . $segment->getSegment(),
+                // phpcs:disable Generic.Files.LineLength.TooLong
                 /** @phpstan-ignore-next-line ColonNamedSegment will always evaluate to true. */
                 $segment instanceof ColonNamedSegment => '/' . rawurlencode($params[$segment->getName()] ?? throw new InvalidArgumentException("Must specify the path parameter {$segment->getName()}.")),
+                // phpcs:enable Generic.Files.LineLength.TooLong
             };
         }
 
@@ -119,7 +121,9 @@ class ReverseRouter
         } else {
             foreach ($queries as $queryKey => $required) {
                 if ($required) {
+                    // phpcs:disable Generic.Files.LineLength.TooLong
                     $use_params[$queryKey] = $params[$queryKey] ?? throw new InvalidArgumentException("Must specify query parameter {$queryKey}.");
+                    // phpcs:enable Generic.Files.LineLength.TooLong
                 } elseif (isset($params[$queryKey])) {
                     $use_params[$queryKey] = $params[$queryKey];
                 }
