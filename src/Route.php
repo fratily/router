@@ -6,10 +6,6 @@ use InvalidArgumentException;
 
 class Route
 {
-    private string $path;
-
-    private RouteOption $option;
-
     private ?string $name = null;
 
     private mixed $payload = null;
@@ -18,10 +14,11 @@ class Route
      * @param string $path The matching path string.
      * @param RouteOption $option The matching rule option.
      */
-    public function __construct(string $path, RouteOption $option)
-    {
-        $clone = $this->path($path);
-        $this->path = $clone->path;
+    public function __construct(
+        private string $path,
+        private RouteOption $option
+    ) {
+        $this->path = $this->path($path)->path; // call path method for validate.
         $this->option = $option;
     }
 
@@ -43,7 +40,7 @@ class Route
         }
 
         if (trim($path) !== $path) {
-            throw new InvalidArgumentException('The path must not start or end with a space');
+            throw new InvalidArgumentException('The path must not start or end with a space.');
         }
 
         if (!str_starts_with($path, '/')) {
