@@ -9,9 +9,6 @@ parameters:
     level: max
     ignoreErrors:
         -
-            message: '#Short ternary operator is not allowed\..+#'
-            path: src
-        -
             message: '#Method .*Test::(test|dataProvider).* no value type specified in iterable type .*#'
             path: tests
         -

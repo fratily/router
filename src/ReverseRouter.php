@@ -58,6 +58,7 @@ class ReverseRouter
             self::CONF_KEY_QUERY => $queries
         ] = $this->routesConfig[$name];
 
+        // @phpstan-ignore-next-line fragment is nullable
         return static::makePath($segments, $pathParams)
             . static::makeQueryString($queries, $queryParams)
             . $fragment === null ? '' : '#' . $fragment;
