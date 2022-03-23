@@ -1,112 +1,29 @@
 <?php
-/**
- * FratilyPHP Router
- *
- * Licensed under The MIT License
- * For full copyright and license information, please see the LICENSE.
- * Redistributions of files must retain the above copyright notice.
- *
- * @author     Kento Oka <kento-oka@kentoka.com>
- * @copyright (c) Kento Oka
- * @license   MIT
- * @since     1.0.0
- */
+
 namespace Fratily\Router;
 
-/**
- *
- */
+use InvalidArgumentException;
+
 class Route
 {
-    public const GET    = "GET";
-    public const POST   = "POST";
-    public const PUT    = "PUT";
-    public const PATCH  = "PATCH";
-    public const DELETE = "DELETE";
+    private ?string $name = null;
+
+    private mixed $payload = null;
 
     /**
-     * @var string
-     */
-    private $name;
-
-    /**
-     * @var string
-     */
-    private $path;
-
-    /**
-     * @var string[]
-     */
-    private $methods;
-
-    /**
-     * @var mixed|null
-     */
-    private $payload;
-
-    /**
-     * Constructor.
-     *
-     * @param string $name The name
-     * @param string $path The path
-     * @param string[] $methods The http methods
+     * @param string $path The matching path string.
+     * @param RouteOption $option The matching rule option.
      */
     public function __construct(
-        string $name,
-        string $path,
-        array $methods = null
+        private string $path,
+        private RouteOption $option
     ) {
-        $this
-            ->setName($name)
-            ->setPath($path)
-            ->setMethods($methods ?? [self::GET])
-        ;
-    }
-
-    /**
-     * Returns the name.
-     *
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    /**
-     * Set the name.
-     *
-     * @param string $name The name
-     *
-     * @return $this
-     */
-    protected function setName(string $name): Route
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
-    /**
-     * Return an instance with the specified name.
-     *
-     * @param string $name The name
-     *
-     * @return $this
-     */
-    public function withName(string $name): Route
-    {
-        if ($this->name === $name) {
-            return $this;
-        }
-
-        return (clone $this)->setName($name);
+        $this->path = $this->path($path)->path; // call path method for validate.
+        $this->option = $option;
     }
 
     /**
      * Returns the path.
-     *
-     * @return string
      */
     public function getPath(): string
     {
@@ -114,120 +31,90 @@ class Route
     }
 
     /**
-     * Set the path.
-     *
-     * @param string $path The path. Path must be percent encoded
-     *
-     * @return $this
+     * Set the matching path.
      */
-    protected function setPath(string $path): Route
+    public function path(string $path): self
     {
-        $this->path = "/" !== mb_substr($path, 0, 1) ? "/{$path}" : $path;
-
-        return $this;
-    }
-
-    /**
-     * Return an instance with the specified path.
-     *
-     * @param string $path The path. Path must be percent encoded
-     *
-     * @return $this
-     */
-    public function withPath(string $path): Route
-    {
-        if ($this->path === $path) {
-            return $this;
+        if ($path === '') {
+            throw new InvalidArgumentException('The path must not be an empty string.');
         }
 
-        return (clone $this)->setPath($path);
-    }
-
-    /**
-     * Returns the methods.
-     *
-     * @return string[]
-     */
-    public function getMethods(): array
-    {
-        return $this->methods;
-    }
-
-    /**
-     * Set the methods.
-     *
-     * @param string[] $methods The methods.
-     *
-     * @return $this
-     */
-    protected function setMethods(array $methods): Route
-    {
-        foreach ($methods as $index => $method) {
-            if (!is_string($method)) {
-                throw new \InvalidArgumentException();
-            }
+        if (trim($path) !== $path) {
+            throw new InvalidArgumentException('The path must not start or end with a space.');
         }
 
-        $methods = array_values(array_unique($methods));
+        if (!str_starts_with($path, '/')) {
+            throw new InvalidArgumentException('The path must start with a slash.');
+        }
 
-        $this->methods  = $methods;
+        if (str_contains($path, '//')) {
+            throw new InvalidArgumentException('The path must not contain consecutive slashes.');
+        }
 
-        return $this;
+        /** @var string[] Regular expressions are fine, so they can never be false */
+        $mb_splitted_path = preg_split('//u' , $path, -1, PREG_SPLIT_NO_EMPTY);
+        $mb_length = count($mb_splitted_path);
+        if (strlen($path) !== $mb_length) {
+            throw new InvalidArgumentException('The path must not contain multibyte characters.');
+        }
+
+        $clone = clone $this;
+        $clone->path = $path;
+
+        return $clone;
     }
 
     /**
-     * Return an instance with the specified methods.
-     *
-     * @param string[] $methods The methods
-     *
-     * @return $this
+     * Returns the matching rule option.
      */
-    public function withMethods(array $methods): Route
+    public function getOption(): RouteOption
     {
-        if ($this->methods === $methods) {
-            return $this;
-        }
+        return $this->option;
+    }
 
-        return (clone $this)->setMethods($methods);
+    /**
+     * Set the matching rule option.
+     */
+    public function option(RouteOption $option): self
+    {
+        $clone = clone $this;
+        $clone->option = $option;
+        return $clone;
+    }
+
+    /**
+     * Returns the name.
+     */
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    /**
+     * Set the name.
+     */
+    public function name(?string $name): self
+    {
+        $clone = clone $this;
+        $clone->name = $name;
+        return $clone;
     }
 
     /**
      * Returns the payload.
-     *
-     * @return mixed|null
      */
-    public function getPayload()
+    public function getPayload(): mixed
     {
         return $this->payload;
     }
 
     /**
      * Set the payload.
-     *
-     * @param mixed|null $payload The payload.
-     *
-     * @return $this
      */
-    protected function setPayload($payload): Route
+    public function payload(mixed $payload): self
     {
-        $this->payload  = $payload;
-
-        return $this;
-    }
-
-    /**
-     * Return an instance with the specified payload.
-     *
-     * @param mixed|null $payload The payload
-     *
-     * @return $this
-     */
-    public function withPayload($payload): Route
-    {
-        if ($this->payload === $payload) {
-            return $this;
-        }
-
-        return (clone $this)->setPayload($payload);
+        $clone = clone $this;
+        $clone->payload = $payload;
+        return $clone;
     }
 }

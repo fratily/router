@@ -1,46 +1,27 @@
-# Fratily Router
-
-`fratily/router` is url routing library.
-Can also do reverse routing as well as routing.
-
-## Install
-
-``` bash
-$ composer require fratily/router
-```
+# fratily/router
 
 ## Usage
 
 ```php
-$collector = new \Fratily\Router\RouteCollector();
-$segmentManager = new \Fratily\Router\SegmentManager();
+use Fratily\Router\RouterBuilder;
+use Fratily\Router\Route;
+use Fratily\Router\RouteOption;
 
-$collector
-    ->get("users", "/users")
-    ->get("user", "/users/:id@num")
-    ->get("user_books", "users/:id@num/books")
-    ->get("user_book", "users/:id@num/books/:title")
-    ->post("user_book_edit", "users/:id@num/books/:title")
-    ->put("user_book_new", "users/:id@num/books")
-    ->delete("user_book_delete", "users/:id@num/books/:title")
-;
+$option = new RouteOption();
+$routes = [
+    new Route('/', $option->strictCheckTrailing(false)),
+    new Route('/foo/bar', $option->strictCheckTrailing(false)),
+    new Route('/foo/:name'),
+    $matchRoute = (new Route('/foo/:name/setting')),
+    new Route('/foo/:name/profile'),
+    new Route('/bar'),
+    new Route('/baz'),
+];
 
-$segmentManager
-    ->addSegment(new \Fratily\Router\Segments\NumSegment()) // `num`
-    ->addSegment(new \Fratily\Router\Segments\AnySegment(), true) // `any` default rule
-;
+$router = (new RouterBuilder($routes))->build();
 
-$router = new \Fratily\Router\Router($collector, $segmentManager);
-
-$router->match(\Fratily\Router\Route::GET, "/users/123/books/abcd");
-$router->reverseRoute(
-    "user_book",
-    [
-        "id" => 123,
-        "title" => "abcd",
-        "a" => "456",
-        "b" => ["e", "f", "g"]
-    ],
-    true
-);
+[
+    'route' => $route, // $matchRoute
+    'params' => $params // ['name' => 'any']
+] = $router->match('/foo/any/setting');
 ```
