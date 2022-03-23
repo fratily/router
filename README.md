@@ -1,12 +1,4 @@
-# Fratily Router
-
-`fratily/router` is url routing library.
-
-## Install
-
-``` bash
-$ composer require fratily/router
-```
+# fratily/router
 
 ## Usage
 
