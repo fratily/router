@@ -11,14 +11,15 @@
     ],
     "license": "MIT",
     "scripts": {
-        "test": [ "@phpunit:unit" ],
+        "test": [ "@phpunit:unit", "@phpunit:integration" ],
         "format": [ "@phpcs" ],
         "lint": [ "@phpstan" ],
 
         "phpcs":"phpcs",
         "phpcbf":"phpcbf",
         "phpstan": "phpstan analyze",
-        "phpunit:unit": "phpunit --testsuite unit"
+        "phpunit:unit": "phpunit --testsuite unit",
+        "phpunit:integration": "phpunit --testsuite integration"
     },
     "require": {
         "php": "^8.0",

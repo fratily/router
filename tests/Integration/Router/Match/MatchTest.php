@@ -1,6 +1,6 @@
 <?php
 
-namespace Fratily\Tests\Router\Router;
+namespace Fratily\Tests\Integration\Router\Match;
 
 use Fratily\Router\Route;
 use Fratily\Router\RouteOption;
